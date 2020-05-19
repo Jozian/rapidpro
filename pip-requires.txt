@@ -57,6 +57,7 @@ python-intercom
 pysocks
 pip-tools
 packaging
+requests_toolbelt
 
 ########################## testing ##########################
 black
