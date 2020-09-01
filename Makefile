@@ -115,6 +115,8 @@ reset:
 	@cp temba/settings.py.dev.docker ../rapidpro-data/rapidpro/
 	@cp -a static/* ../rapidpro-data/rapidpro/sitestatic/
 
+	@cp -a templates/ ../rapidpro-data/rapidpro/
+
 	@mkdir -p ../primero-data/db/data/
 
 	@mkdir ../primero-data/letsencrypt/
