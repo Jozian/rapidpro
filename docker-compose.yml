@@ -28,8 +28,8 @@ services:
       - rapidpro
     volumes:
       - ../rapidpro-data/rapidpro/settings.py.dev.docker:/srv/rapidpro/rapidpro/temba/settings.py
-      - ../rapidpro-data/rapidpro/sitestatic:/srv/rapidpro/rapidpro/sitestatic
-      - ../rapidpro-data/rapidpro/static/brands:/srv/rapidpro/rapidpro/static/brands
+      - ../rapidpro-data/rapidpro/sitestatic:/srv/rapidpro/rapidpro/static
+      - ../rapidpro-data/rapidpro/sitestatic/CACHE:/srv/rapidpro/rapidpro/sitestatic/CACHE
 
   postgresql:
     image: postgis/postgis:12-3.0

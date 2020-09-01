@@ -113,8 +113,7 @@ reset:
 	@mkdir ../primero-data/
 	@mkdir -p ../rapidpro-data/rapidpro/sitestatic/
 	@cp temba/settings.py.dev.docker ../rapidpro-data/rapidpro/
-	@mkdir -p ../rapidpro-data/rapidpro/static/
-	@cp -a static/brands/ ../rapidpro-data/rapidpro/static/
+	@cp -a static/* ../rapidpro-data/rapidpro/sitestatic/
 
 	@mkdir -p ../primero-data/db/data/
 
