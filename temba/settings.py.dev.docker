@@ -36,6 +36,7 @@ custom["email"] = "join@custom-brand.io"
 custom["support_email"] = "support@custom-brand.io"
 custom["allow_signups"] = True
 BRANDING["custom-brand.io"] = custom
+DEFAULT_BRAND = "rapidpro.io"
 
 # set our domain on our brands to our tunnel domain if set
 localhost_domain = os.environ.get("LOCALHOST_TUNNEL_DOMAIN")
