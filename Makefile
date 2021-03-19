@@ -1,5 +1,6 @@
 # TAG=$(shell date +%Y%m%d)
 TAG=latest
+BRANCH := rp-v6.2.4-docker
 DOCKER_HUB_ORG ?= jozian
 DOCKER_HUB_PRJ ?= rapidpro
 DOCKER_HUB_COURIER ?= courier
@@ -133,10 +134,10 @@ reset:
 	@cp ../rp-discord-proxy/config.toml.example ../rapidpro-data/rp-discord-proxy/config.toml
 
 clone:
-	@git clone --branch docker git@github.com:Jozian/courier.git ../courier
-	@git clone --branch docker git@github.com:Jozian/mailroom.git ../mailroom
-	@git clone --branch docker git@github.com:Jozian/rp-archiver.git ../rp-archiver
-	@git clone --branch docker git@github.com:Jozian/rp-indexer.git ../rp-indexer
+	@git clone --branch ${BRANCH} git@github.com:Jozian/courier.git ../courier
+	@git clone --branch ${BRANCH} git@github.com:Jozian/mailroom.git ../mailroom
+	@git clone --branch ${BRANCH} git@github.com:Jozian/rp-archiver.git ../rp-archiver
+	@git clone --branch ${BRANCH} git@github.com:Jozian/rp-indexer.git ../rp-indexer
 	@git clone git@github.com:awensaunders/RapidPro-Discord-Proxy.git ../rp-discord-proxy
 
 docker-setup:
