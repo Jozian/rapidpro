@@ -71,15 +71,15 @@ build-rp-indexer-no-cache:
 push:
 	docker push ${DOCKER_HUB_ORG}/${DOCKER_HUB_PRJ}:${TAG}
 
-up: network
+setup-hugepage:
 	@sudo sysctl -w vm.max_map_count=262144
 	@echo never | sudo tee /sys/kernel/mm/transparent_hugepage/enabled
+
+up: network
 	@docker-compose up
 	# @docker-compose up ${DOCKER_HUB_PRJ}
 
 up-d: network
-	@sudo sysctl -w vm.max_map_count=262144
-	@echo never | sudo tee /sys/kernel/mm/transparent_hugepage/enabled
 	@docker-compose up -d
 	# @docker-compose up ${DOCKER_HUB_PRJ}
 
@@ -87,13 +87,9 @@ down:
 	@docker-compose down
 
 up-prod: network
-	@sudo sysctl -w vm.max_map_count=262144
-	@echo never | sudo tee /sys/kernel/mm/transparent_hugepage/enabled
 	@docker-compose -f ./docker-compose.yml -f ./docker-compose.prod.yml up
 
 up-prod-d: network
-	@sudo sysctl -w vm.max_map_count=262144
-	@echo never | sudo tee /sys/kernel/mm/transparent_hugepage/enabled
 	@docker-compose -f ./docker-compose.yml -f ./docker-compose.prod.yml up -d
 
 down-prod:
