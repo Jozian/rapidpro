@@ -2,6 +2,9 @@ import logging
 import numbers
 from collections import OrderedDict
 
+from django.contrib.auth.models import User
+from temba.orgs.models import Org
+
 import iso8601
 import pycountry
 import pytz
@@ -11,7 +14,7 @@ from rest_framework import serializers
 from django.conf import settings
 
 from temba import mailroom
-from temba.api.models import Resthook, ResthookSubscriber, WebHookEvent
+from temba.api.models import APIToken, Resthook, ResthookSubscriber, WebHookEvent
 from temba.archives.models import Archive
 from temba.campaigns.models import Campaign, CampaignEvent
 from temba.channels.models import Channel, ChannelEvent
@@ -22,7 +25,6 @@ from temba.globals.models import Global
 from temba.locations.models import AdminBoundary
 from temba.mailroom import modifiers
 from temba.msgs.models import ERRORED, FAILED, INITIALIZING, PENDING, QUEUED, SENT, Broadcast, Label, Msg
-from temba.orgs.models import Org
 from temba.templates.models import Template, TemplateTranslation
 from temba.tickets.models import Ticket, Ticketer
 from temba.utils import extract_constants, json, on_transaction_commit
@@ -461,6 +463,37 @@ class ChannelReadSerializer(ReadSerializer):
     class Meta:
         model = Channel
         fields = ("uuid", "name", "address", "country", "device", "last_seen", "created_on")
+
+
+class ChannelWriteSerializer(WriteSerializer):
+    channel_type = serializers.CharField(required=True, max_length=3)
+    country = serializers.CharField(required=False, allow_null=True)
+    name = serializers.CharField(required=False, allow_null=True, max_length=64)
+    address = serializers.CharField(required=False, allow_null=True, max_length=255)
+    config = serializers.JSONField(required=False, default=dict)
+    role = serializers.CharField(required=False, allow_null=True, max_length=4)
+    schemes = serializers.ListField(required=False, allow_null=True, child=serializers.CharField(max_length=16))
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def validate(self, data):
+        print("Channel write validate called")
+        return data
+
+    def save(self):
+        print("CHANNEL WRITE SAVE CALLED")
+        self.instance = Channel.create(
+            self.context["org"],
+            self.context["user"],
+            self.validated_data.get("country"),
+            self.validated_data.get("channel_type"),
+            name=self.validated_data.get("name"),
+            config=self.validated_data.get("config"),
+            role=self.validated_data.get("role"),
+            schemes=self.validated_data.get("schemes"),
+        )
+        return self.instance
 
 
 class ClassifierReadSerializer(ReadSerializer):
@@ -1377,6 +1410,30 @@ class WebHookEventReadSerializer(ReadSerializer):
     class Meta:
         model = WebHookEvent
         fields = ("resthook", "data", "created_on")
+
+class WorkspaceWriteSerializer(WriteSerializer):
+    name = serializers.CharField(required=True)
+    create_user = serializers.BooleanField(default=True)
+
+    def validate(self, data):
+        return data
+    def save(self):
+        create_user = self.validated_data["create_user"]
+        name = self.validated_data["name"]
+        org: Org = self.context["org"]
+        sub_org: Org = org.create_sub_org(name, timezone=org.timezone, created_by=self.context["user"])
+        if(create_user):
+            new_user: User = User.objects.create_user(f"{name}_user", f"{name}_user@localhost")
+            new_user.set_password(User.objects.make_random_password(length=20))
+            sub_org.administrators.add(new_user)
+            new_user.set_org(sub_org)
+            token = APIToken.get_or_create(sub_org, new_user)
+            return token
+        
+class APITokenReadSerializer(ReadSerializer):
+    class Meta:
+        model = APIToken
+        fields = ["key"]
 
 
 class TemplateReadSerializer(ReadSerializer):
