@@ -5,7 +5,7 @@ CMD="${@}"
 set -e
 
 if [ "${CMD%${CMD#python manage.py migrate}}" = "python manage.py migrate" ]; then
-    exec ${CMD}
+  exec ${CMD}
 fi
 
 if [ ! -e "./temba/settings.py" ]; then
