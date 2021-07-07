@@ -1,5 +1,5 @@
 ---
-version: '3.8'
+version: "3.9"
 
 services:
   rapidpro:
@@ -9,7 +9,7 @@ services:
       - TEMBA_HOST=localhost
       - DJANGO_DEBUG=off
     ports:
-      - '8000:8000'
+      - "8000:8000"
 
   elasticsearch:
     ports:
