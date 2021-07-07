@@ -1574,8 +1574,6 @@ class Org(SmartModel):
             self.update_capabilities()
             # outside of the transaction as it's going to call out to mailroom for flow validation
             transaction.on_commit(lambda: self.create_sample_flows(branding.get("api_link", "")))
-        
-
 
     def download_and_save_media(self, request, extension=None):  # pragma: needs cover
         """

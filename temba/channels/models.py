@@ -416,7 +416,17 @@ class Channel(TembaModel, DependencyMixin):
 
     @classmethod
     def create(
-        cls, org, user, country, channel_type, name=None, address=None, config=None, role=None, schemes=None, **kwargs,
+        cls,
+        org,
+        user,
+        country,
+        channel_type,
+        name=None,
+        address=None,
+        config=None,
+        role=None,
+        schemes=None,
+        **kwargs,
     ):
         if not role:
             role = Channel.DEFAULT_ROLE

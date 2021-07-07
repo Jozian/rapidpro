@@ -2,9 +2,6 @@ import logging
 import numbers
 from collections import OrderedDict
 
-from django.contrib.auth.models import User
-from temba.orgs.models import Org
-
 import iso8601
 import pycountry
 import pytz
@@ -12,6 +9,7 @@ import regex
 from rest_framework import serializers
 
 from django.conf import settings
+from django.contrib.auth.models import User
 
 from temba import mailroom
 from temba.api.models import APIToken, Resthook, ResthookSubscriber, WebHookEvent
@@ -25,6 +23,7 @@ from temba.globals.models import Global
 from temba.locations.models import AdminBoundary
 from temba.mailroom import modifiers
 from temba.msgs.models import ERRORED, FAILED, INITIALIZING, PENDING, QUEUED, SENT, Broadcast, Label, Msg
+from temba.orgs.models import Org
 from temba.templates.models import Template, TemplateTranslation
 from temba.tickets.models import Ticket, Ticketer
 from temba.utils import extract_constants, json, on_transaction_commit
@@ -1411,25 +1410,28 @@ class WebHookEventReadSerializer(ReadSerializer):
         model = WebHookEvent
         fields = ("resthook", "data", "created_on")
 
+
 class WorkspaceWriteSerializer(WriteSerializer):
     name = serializers.CharField(required=True)
     create_user = serializers.BooleanField(default=True)
 
     def validate(self, data):
         return data
+
     def save(self):
         create_user = self.validated_data["create_user"]
         name = self.validated_data["name"]
         org: Org = self.context["org"]
         sub_org: Org = org.create_sub_org(name, timezone=org.timezone, created_by=self.context["user"])
-        if(create_user):
+        if create_user:
             new_user: User = User.objects.create_user(f"{name}_user", f"{name}_user@localhost")
             new_user.set_password(User.objects.make_random_password(length=20))
             sub_org.administrators.add(new_user)
             new_user.set_org(sub_org)
             token = APIToken.get_or_create(sub_org, new_user)
             return token
-        
+
+
 class APITokenReadSerializer(ReadSerializer):
     class Meta:
         model = APIToken
