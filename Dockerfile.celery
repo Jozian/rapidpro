@@ -14,6 +14,7 @@ RUN apt-get -yq update \
 
 
 FROM base AS pybuilder
+ENV POETRY_VIRTUALENVS_CREATE=false
 RUN apt-get -yq update \
         && DEBIAN_FRONTEND=noninteractive apt-get install -y \
                 build-essential \
@@ -25,11 +26,10 @@ RUN apt-get -yq update \
                 sed \
         && rm -rf /var/lib/apt/lists/* \
         && apt-get clean
-COPY --chown=rp-celery pip-requires.txt ./
+COPY --chown=rp-celery pyproject.toml poetry.lock ./
 USER rp-celery
-RUN cat ./pip-requires.txt \
-            | sed -E -e 's/^redis.*/redis/' \
-            | pip install --no-cache-dir --user -r /dev/stdin
+RUN pip install --no-cache-dir --user poetry
+RUN poetry install --no-dev
 
 FROM base AS rp-celery
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1
