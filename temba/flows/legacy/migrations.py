@@ -7,10 +7,10 @@ from temba.contacts.models import ContactField, ContactGroup
 from temba.flows.models import Flow
 from temba.msgs.models import Label
 from temba.utils import json
-from temba.utils.languages import iso6392_to_iso6393
 from temba.utils.uuid import uuid4
 
 from .expressions import migrate_v7_template
+from .languages import iso6391_to_iso6393
 
 
 def migrate_to_version_11_12(json_flow, flow=None):
@@ -575,7 +575,7 @@ def migrate_to_version_11_3(json_flow, flow=None):
 def _base_migrate_to_version_11_2(json_flow, country_code):
     if "base_language" in json_flow and json_flow["base_language"] != "base":
         iso_code = json_flow["base_language"]
-        new_iso_code = iso6392_to_iso6393(iso_code, country_code)
+        new_iso_code = iso6391_to_iso6393(iso_code, country_code)
         json_flow["base_language"] = new_iso_code
 
     return json_flow
@@ -586,7 +586,7 @@ def migrate_to_version_11_2(json_flow, flow=None):
     Migrates base_language in flow definitions from iso639-2 to iso639-3
     """
     if flow is not None:
-        country_code = flow.org.get_country_code()
+        country_code = flow.org.default_country_code
     else:  # pragma: no cover
         raise ValueError("Languages depend on org, can not migrate to version 11 without org")
 
@@ -597,7 +597,7 @@ def migrate_export_to_version_11_2(exported_json, org, same_site=True):
     """
     Migrates base_language in flow exports from iso639-2 to iso639-3
     """
-    country_code = org.get_country_code()
+    country_code = org.default_country_code
 
     migrated_flows = []
     for sub_flow in exported_json.get("flows", []):
@@ -631,13 +631,13 @@ def _base_migrate_to_version_11_1(json_flow, country_code):
                     if key == "base":
                         new_obj.update({key: val})
                     else:
-                        new_key = iso6392_to_iso6393(key, country_code)
+                        new_key = iso6391_to_iso6393(key, country_code)
                         new_obj.update({new_key: val})
 
                 value = new_obj
             elif "lang" in obj and obj["lang"] != "base":
                 iso_code = obj["lang"]
-                new_iso_code = iso6392_to_iso6393(iso_code, country_code)
+                new_iso_code = iso6391_to_iso6393(iso_code, country_code)
                 obj["lang"] = new_iso_code
                 value = obj
             else:
@@ -658,7 +658,7 @@ def migrate_to_version_11_1(json_flow, flow=None):
     Migrates translation language codes in flow definitions from iso639-2 to iso639-3
     """
     if flow is not None:
-        country_code = flow.org.get_country_code()
+        country_code = flow.org.default_country_code
     else:  # pragma: no cover
         raise ValueError("Languages depend on org, can not migrate to version 11 without org")
 
@@ -669,11 +669,10 @@ def migrate_export_to_version_11_1(exported_json, org, same_site=True):
     """
     Migrates translation language codes in flow exports from iso639-2 to iso639-3
     """
-    country_code = org.get_country_code()
 
     migrated_flows = []
     for sub_flow in exported_json.get("flows", []):
-        flow = _base_migrate_to_version_11_1(sub_flow, country_code=country_code)
+        flow = _base_migrate_to_version_11_1(sub_flow, country_code=org.default_country_code)
         migrated_flows.append(flow)
 
     exported_json["flows"] = migrated_flows

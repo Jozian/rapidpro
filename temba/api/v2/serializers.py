@@ -25,8 +25,9 @@ from temba.globals.models import Global
 from temba.locations.models import AdminBoundary
 from temba.mailroom import modifiers
 from temba.msgs.models import ERRORED, FAILED, INITIALIZING, PENDING, QUEUED, SENT, Broadcast, Label, Msg
+from temba.orgs.models import Org
 from temba.templates.models import Template, TemplateTranslation
-from temba.tickets.models import Ticketer
+from temba.tickets.models import Ticket, Ticketer
 from temba.utils import extract_constants, json, on_transaction_commit
 
 from . import fields
@@ -206,7 +207,7 @@ class BroadcastWriteSerializer(WriteSerializer):
     urns = fields.URNListField(required=False)
     contacts = fields.ContactField(many=True, required=False)
     groups = fields.ContactGroupField(many=True, required=False)
-    channel = fields.ChannelField(required=False)
+    ticket = fields.TicketField(required=False)
 
     def validate(self, data):
         if not (data.get("urns") or data.get("contacts") or data.get("groups")):
@@ -230,8 +231,8 @@ class BroadcastWriteSerializer(WriteSerializer):
             groups=self.validated_data.get("groups", []),
             contacts=self.validated_data.get("contacts", []),
             urns=self.validated_data.get("urns", []),
-            channel=self.validated_data.get("channel"),
             template_state=Broadcast.TEMPLATE_STATE_UNEVALUATED,
+            ticket=self.validated_data.get("ticket"),
         )
 
         # send it
@@ -702,13 +703,17 @@ class ContactFieldReadSerializer(ReadSerializer):
     }
 
     value_type = serializers.SerializerMethodField()
+    pinned = serializers.SerializerMethodField()
 
     def get_value_type(self, obj):
         return self.VALUE_TYPES[obj.value_type]
 
+    def get_pinned(self, obj):
+        return obj.show_in_table
+
     class Meta:
         model = ContactField
-        fields = ("key", "label", "value_type")
+        fields = ("key", "label", "value_type", "pinned")
 
 
 class ContactFieldWriteSerializer(WriteSerializer):
@@ -735,13 +740,15 @@ class ContactFieldWriteSerializer(WriteSerializer):
         return self.VALUE_TYPES[value]
 
     def validate(self, data):
+        org = self.context["org"]
+        org_active_fields_limit = org.get_limit(Org.LIMIT_FIELDS)
 
-        field_count = ContactField.user_fields.count_active_for_org(org=self.context["org"])
-        if not self.instance and field_count >= settings.MAX_ACTIVE_CONTACTFIELDS_PER_ORG:
+        field_count = ContactField.user_fields.count_active_for_org(org=org)
+        if not self.instance and field_count >= org_active_fields_limit:
             raise serializers.ValidationError(
                 "This org has %s contact fields and the limit is %s. "
                 "You must delete existing ones before you can "
-                "create new ones." % (field_count, settings.MAX_ACTIVE_CONTACTFIELDS_PER_ORG)
+                "create new ones." % (field_count, org_active_fields_limit)
             )
 
         return data
@@ -789,12 +796,15 @@ class ContactGroupWriteSerializer(WriteSerializer):
         return value
 
     def validate(self, data):
+        org = self.context["org"]
+        org_active_groups_limit = org.get_limit(Org.LIMIT_GROUPS)
+
         group_count = ContactGroup.user_groups.filter(org=self.context["org"]).count()
-        if group_count >= ContactGroup.MAX_ORG_CONTACTGROUPS:
+        if group_count >= org_active_groups_limit:
             raise serializers.ValidationError(
                 "This org has %s groups and the limit is %s. "
                 "You must delete existing ones before you can "
-                "create new ones." % (group_count, ContactGroup.MAX_ORG_CONTACTGROUPS)
+                "create new ones." % (group_count, org_active_groups_limit)
             )
         return data
 
@@ -875,7 +885,12 @@ class ContactBulkActionSerializer(WriteSerializer):
 
 
 class FlowReadSerializer(ReadSerializer):
-    FLOW_TYPES = {Flow.TYPE_MESSAGE: "message", Flow.TYPE_VOICE: "voice", Flow.TYPE_SURVEY: "survey"}
+    FLOW_TYPES = {
+        Flow.TYPE_MESSAGE: "message",
+        Flow.TYPE_VOICE: "voice",
+        Flow.TYPE_BACKGROUND: "background",
+        Flow.TYPE_SURVEY: "survey",
+    }
 
     type = serializers.SerializerMethodField()
     archived = serializers.ReadOnlyField(source="is_archived")
@@ -927,9 +942,10 @@ class FlowReadSerializer(ReadSerializer):
 
 class FlowRunReadSerializer(ReadSerializer):
     EXIT_TYPES = {
-        FlowRun.EXIT_TYPE_COMPLETED: "completed",
-        FlowRun.EXIT_TYPE_INTERRUPTED: "interrupted",
-        FlowRun.EXIT_TYPE_EXPIRED: "expired",
+        FlowRun.STATUS_COMPLETED: "completed",
+        FlowRun.STATUS_INTERRUPTED: "interrupted",
+        FlowRun.STATUS_EXPIRED: "expired",
+        FlowRun.STATUS_FAILED: "failed",
     }
 
     flow = fields.FlowField()
@@ -967,7 +983,7 @@ class FlowRunReadSerializer(ReadSerializer):
         return {k: convert_result(r) for k, r in obj.results.items()}
 
     def get_exit_type(self, obj):
-        return self.EXIT_TYPES.get(obj.exit_type)
+        return self.EXIT_TYPES.get(obj.status)
 
     class Meta:
         model = FlowRun
@@ -999,6 +1015,7 @@ class FlowStartReadSerializer(ReadSerializer):
     status = serializers.SerializerMethodField()
     groups = fields.ContactGroupField(many=True)
     contacts = fields.ContactField(many=True)
+    exclude_active = serializers.SerializerMethodField()
     extra = serializers.JSONField(required=False)
     params = serializers.JSONField(required=False, source="extra")
     created_on = serializers.DateTimeField(default_timezone=pytz.UTC)
@@ -1006,6 +1023,9 @@ class FlowStartReadSerializer(ReadSerializer):
 
     def get_status(self, obj):
         return FlowStartReadSerializer.STATUSES.get(obj.status)
+
+    def get_exclude_active(self, obj):
+        return not obj.include_active
 
     class Meta:
         model = FlowStart
@@ -1017,6 +1037,7 @@ class FlowStartReadSerializer(ReadSerializer):
             "groups",
             "contacts",
             "restart_participants",
+            "exclude_active",
             "extra",
             "params",
             "created_on",
@@ -1030,6 +1051,7 @@ class FlowStartWriteSerializer(WriteSerializer):
     groups = fields.ContactGroupField(many=True, required=False)
     urns = fields.URNListField(required=False)
     restart_participants = serializers.BooleanField(required=False)
+    exclude_active = serializers.BooleanField(required=False)
     extra = serializers.JSONField(required=False)
     params = serializers.JSONField(required=False)
 
@@ -1057,6 +1079,7 @@ class FlowStartWriteSerializer(WriteSerializer):
         contacts = self.validated_data.get("contacts", [])
         groups = self.validated_data.get("groups", [])
         restart_participants = self.validated_data.get("restart_participants", True)
+        exclude_active = self.validated_data.get("exclude_active", False)
         extra = self.validated_data.get("extra")
 
         params = self.validated_data.get("params")
@@ -1069,6 +1092,7 @@ class FlowStartWriteSerializer(WriteSerializer):
             self.context["user"],
             start_type=FlowStart.TYPE_API_ZAPIER if self.context["is_zapier"] else FlowStart.TYPE_API,
             restart_participants=restart_participants,
+            include_active=not exclude_active,
             contacts=contacts,
             groups=groups,
             urns=urns,
@@ -1085,7 +1109,7 @@ class GlobalReadSerializer(ReadSerializer):
 
 
 class GlobalWriteSerializer(WriteSerializer):
-    value = serializers.CharField(required=True)
+    value = serializers.CharField(required=True, max_length=Global.MAX_VALUE_LEN)
     name = serializers.CharField(
         required=False,
         max_length=Global.MAX_NAME_LEN,
@@ -1104,11 +1128,14 @@ class GlobalWriteSerializer(WriteSerializer):
         if not self.instance and not data.get("name"):
             raise serializers.ValidationError("Name is required when creating new global.")
 
-        globals_count = Global.objects.filter(org=self.context["org"], is_active=True).count()
-        if globals_count >= Global.MAX_ORG_GLOBALS:
+        org = self.context["org"]
+        globals_count = Global.objects.filter(org=org, is_active=True).count()
+        org_active_globals_limit = org.get_limit(Org.LIMIT_GLOBALS)
+
+        if globals_count >= org_active_globals_limit:
             raise serializers.ValidationError(
                 "This org has %s globals and the limit is %s. You must delete existing ones before you can "
-                "create new ones." % (globals_count, Global.MAX_ORG_GLOBALS)
+                "create new ones." % (globals_count, org_active_globals_limit)
             )
         return data
 
@@ -1426,6 +1453,7 @@ class TemplateReadSerializer(ReadSerializer):
                 {
                     "language": translation.language,
                     "content": translation.content,
+                    "namespace": translation.namespace,
                     "variable_count": translation.variable_count,
                     "status": translation.get_status_display(),
                     "channel": {"uuid": translation.channel.uuid, "name": translation.channel.name},
@@ -1449,3 +1477,103 @@ class TicketerReadSerializer(ReadSerializer):
     class Meta:
         model = Ticketer
         fields = ("uuid", "name", "type", "created_on")
+
+
+class TicketReadSerializer(ReadSerializer):
+    STATUSES = {Ticket.STATUS_OPEN: "open", Ticket.STATUS_CLOSED: "closed"}
+
+    ticketer = fields.TicketerField()
+    contact = fields.ContactField()
+    assignee = serializers.SerializerMethodField()
+    status = serializers.SerializerMethodField()
+    opened_on = serializers.DateTimeField(default_timezone=pytz.UTC)
+    closed_on = serializers.DateTimeField(default_timezone=pytz.UTC)
+
+    def get_assignee(self, obj):
+        return (
+            {"id": obj.assignee.id, "first_name": obj.assignee.first_name, "last_name": obj.assignee.last_name}
+            if obj.assignee
+            else None
+        )
+
+    def get_status(self, obj):
+        return self.STATUSES.get(obj.status)
+
+    class Meta:
+        model = Ticket
+        fields = ("uuid", "ticketer", "assignee", "contact", "status", "subject", "body", "opened_on", "closed_on")
+
+
+class TicketWriteSerializer(WriteSerializer):
+    STATUSES = {"open": Ticket.STATUS_OPEN, "closed": Ticket.STATUS_CLOSED}
+
+    status = serializers.CharField(
+        required=True,
+    )
+
+    def validate_status(self, value):
+        return self.STATUSES[value]
+
+    def save(self):
+        """
+        Update our ticket
+        """
+        status = self.validated_data.get("status")
+        if self.instance:
+            if status == Ticket.STATUS_CLOSED:
+                Ticket.bulk_close(self.context["org"], self.context["user"], [self.instance])
+            elif status == Ticket.STATUS_OPEN:
+                Ticket.bulk_reopen(self.context["org"], self.context["user"], [self.instance])
+
+        return self.instance
+
+
+class WorkspaceReadSerializer(ReadSerializer):
+    DATE_STYLES = {
+        Org.DATE_FORMAT_DAY_FIRST: "day_first",
+        Org.DATE_FORMAT_MONTH_FIRST: "month_first",
+        Org.DATE_FORMAT_YEAR_FIRST: "year_first",
+    }
+
+    country = serializers.SerializerMethodField()
+    languages = serializers.SerializerMethodField()
+    primary_language = serializers.SerializerMethodField()
+    timezone = serializers.SerializerMethodField()
+    date_style = serializers.SerializerMethodField()
+    credits = serializers.SerializerMethodField()
+    anon = serializers.SerializerMethodField()
+
+    def get_country(self, obj):
+        return obj.default_country_code
+
+    def get_languages(self, obj):
+        return obj.flow_languages
+
+    def get_primary_language(self, obj):
+        return obj.flow_languages[0] if obj.flow_languages else None
+
+    def get_timezone(self, obj):
+        return str(obj.timezone)
+
+    def get_date_style(self, obj):
+        return self.DATE_STYLES.get(obj.date_format)
+
+    def get_credits(self, obj):
+        return {"used": obj.get_credits_used(), "remaining": obj.get_credits_remaining()}
+
+    def get_anon(self, obj):
+        return obj.is_anon
+
+    class Meta:
+        model = Org
+        fields = (
+            "uuid",
+            "name",
+            "country",
+            "languages",
+            "primary_language",
+            "timezone",
+            "date_style",
+            "credits",
+            "anon",
+        )

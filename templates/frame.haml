@@ -1,14 +1,13 @@
 <!DOCTYPE HTML>
--load humanize
+-load humanize i18n smartmin sms compress
 
 {% block html-tag %}
 <html lang="{{ LANGUAGE_CODE }}">
 {% endblock %}
   %head
     %title
-      {% block page-title %}
-        {{ brand.name }} - Visually build interactive SMS Applications
-      {% endblock %}
+      -block page-title
+        {{ brand.name }} - {{ brand.title }}
 
     %meta{charset:"utf-8"}
     %meta{name:"viewport", content:"width=device-width, initial-scale=1.0"}
@@ -16,7 +15,6 @@
     %meta{name:"author", content:"Nyaruka Ltd"}
     %meta{http-equiv:"X-UA-Compatible", content:"IE=10"}
 
-    -load compress
     :javascript
 
       window.supportEmail = '{{brand.support_email}}';
@@ -33,7 +31,6 @@
         (function() { document.write(unescape('%3Cscript src="' + src + '"%3E%3C/script%3E')); })();
       }
 
-
     // ==== JQUERY ====
     :javascript
       conditionalLoad('bower/jquery/jquery.js', '//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.js');
@@ -41,32 +38,15 @@
 
     -# this view make it possible to process translations from javascript land
     <script src="{% url 'django.views.i18n.javascript_catalog' %}"></script>
-
     -compress js
       :javascript
         var static_url = '{{STATIC_URL}}';
 
       %script{src:"{{ STATIC_URL }}bower/toastr/toastr.js"}
-      %script{src:"{{ STATIC_URL }}bower/select2/select2.js"}
-      %script{src:"{{ STATIC_URL }}bower/Caret.js/dist/jquery.caret.js"}
-      %script{src:"{{ STATIC_URL }}bower/At.js/dist/js/jquery.atwho.js"}
       %script{src:"{{ STATIC_URL }}bower/bootstrap/js/bootstrap-modal.js"}
       %script{src:"{{ STATIC_URL }}bower/bootstrap/js/bootstrap-dropdown.js"}
       %script{src:"{{ STATIC_URL }}bower/bootstrap/js/bootstrap-tooltip.js"}
-      %script{src:"{{ STATIC_URL }}bower/bootstrap/js/bootstrap-tab.js"}
-      %script{src:"{{ STATIC_URL }}bower/jquery-pjax/jquery.pjax.js"}
-      %script{src:"{{ STATIC_URL }}bower/jquery-ui/ui/jquery.ui.core.js"}
-      %script{src:"{{ STATIC_URL }}bower/jquery-ui/ui/jquery.ui.widget.js"}
-      %script{src:"{{ STATIC_URL }}bower/jquery-ui/ui/jquery.ui.mouse.js"}
-      %script{src:"{{ STATIC_URL }}bower/jquery-ui/ui/jquery.ui.draggable.js"}
-      %script{src:"{{ STATIC_URL }}bower/jquery-ui/ui/jquery.ui.droppable.js"}
-      %script{src:"{{ STATIC_URL }}bower/jquery-ui/ui/jquery.ui.sortable.js"}
-      %script{src:"{{ STATIC_URL }}bower/jquery-ui/ui/jquery.ui.datepicker.js"}
-      %script{src:"{{ STATIC_URL }}bower/jquery-ui/ui/jquery.ui.slider.js"}
-      %script{src:"{{ STATIC_URL }}bower/jquery-sparkline/dist/jquery.sparkline.js"}
-      %script{src:"{{ STATIC_URL }}bower/jquery-history/scripts/jquery.history.js"}
-      %script{src:"{{ STATIC_URL }}bower/jquery-easing/jquery.easing.js"}
-      %script{src:"{{ STATIC_URL }}bower/jquery-hoverintent/jquery.hoverIntent.js"}
+      %script{src:"{{ STATIC_URL }}bower/bootstrap/js/bootstrap-tab.js"}      
       %script{src:"{{ STATIC_URL }}bower/intercooler-js/src/intercooler.js"}
       %script{src:"{{ STATIC_URL }}bower/moment/moment.js"}
       %script{src:"{{ STATIC_URL }}bower/moment-timezone/builds/moment-timezone-with-data.js"}
@@ -74,58 +54,45 @@
       %script{src:"{{ STATIC_URL }}bower/video.js/dist/video.js"}
       %script{src:"{{ STATIC_URL }}bower/videojs-vjsdownload/dist/videojs-vjsdownload.js"}
       %script{src:"{{ STATIC_URL }}bower/xregexp/xregexp-all.js"}
-      %script{src:"{{ STATIC_URL }}bower/sticky-kit/jquery.sticky-kit.js"}
+
+      // expanded nav dropdown
+      %script{src:"{{ STATIC_URL }}bower/jquery-hoverintent/jquery.hoverIntent.js"}
 
       // Non-bower packages
       %script{src:"{{ STATIC_URL }}lib/uuid.js"}
       %script{src:"{{ STATIC_URL }}lib/bootstrap-limit.js"}
-      %script{src:"{{ STATIC_URL }}lib/jquery-ui-timepicker-addon.js"}
 
       -if not debug and not testing
         %script{src:"{{ STATIC_URL }}lib/raven.min.js"}
 
     -compress js
-      %script{src:"{{ STATIC_URL }}js/omnibox.js"}
       %script{src:"{{ STATIC_URL }}js/temba.js"}
-      %script{src:"{{ STATIC_URL }}js/excellent.js"}
       %script{src:"{{ STATIC_URL }}js/labels.js"}
-      %script{src:"{{ STATIC_URL }}coffee/formax.coffee", type:"text/coffeescript"}
+      %script{src:"{{ STATIC_URL }}js/formax.js"}
     
-    -include "components-head.html"
     -include "includes/frame_top.html"
+
+    -if not COMPONENTS_DEV_MODE
+      -include "components-head.html"
 
     -if brand.favico
       %link{type:"image/ico", rel:"shortcut icon", href:"{{ STATIC_URL }}{{ brand.favico }}"}
     -else
       %link{type:"image/ico", rel:"shortcut icon", href:"{{ STATIC_URL }}images/favicon.ico"}
 
-    -load smartmin sms
-    -load i18n
-
     -block styles
       %link{rel:'stylesheet', href:'https://fonts.googleapis.com/css?family=Roboto+Mono:300|Roboto:200,300,400,500'}
 
       -compress css
         %link{type:'text/css', rel:'stylesheet', href:'{{ STATIC_URL }}bower/bootstrap-css/css/bootstrap.css',  media:'all' }
-        %link{type:'text/css', rel:'stylesheet', href:'{{ STATIC_URL }}bower/animate.css/animate.css',  media:'all' }
-
-
-      -compress css
-        // %link{type:'text/css', rel:'stylesheet', href:'{{ STATIC_URL }}bower/bootstrap-css/css/bootstrap-responsive.css',
-              // media:'all and (min-width: 1200px), all and (max-width: 767px), all and (max-width: 480px), all and (min-width: 980px)' }
 
       -compress css
         %link{type:'text/css', rel:'stylesheet', href:"{{ STATIC_URL }}bower/toastr/toastr.css", media:'all'}
-        %link{type:'text/css', rel:'stylesheet', href:"{{ STATIC_URL }}bower/select2/select2.css", media:'all'}
-        %link{type:'text/css', rel:'stylesheet', href:'{{ STATIC_URL }}bower/At.js/dist/css/jquery.atwho.css', media:'all'}
-        %link{type:'text/css', rel:'stylesheet', href:"{{ STATIC_URL }}bower/jquery-ui/themes/redmond/jquery-ui.css", media:'all'}
-        %link{type:'text/css', rel:'stylesheet', href:"{{ STATIC_URL }}bower/jquery-ui/themes/redmond/jquery.ui.theme.css", media:'all'}
         %link{type:'text/css', rel:'stylesheet', href:"{{ STATIC_URL }}bower/featherlight/src/featherlight.css", media:'all'}
         %link{type:'text/css', rel:'stylesheet', href:"{{ STATIC_URL }}bower/video.js/dist/video-js.css", media:'all'}
         %link{type:'text/css', rel:'stylesheet', href:"{{ STATIC_URL }}bower/videojs-vjsdownload/dist/videojs-vjsdownload.css", media:'all'}
 
       -compress css
-        %link{type:'text/css', rel:'stylesheet', href:"{{ STATIC_URL }}fonts/temba/style.css", media:'all'}
         %link{type:'text/css', rel:'stylesheet', href:"{{ STATIC_URL }}fonts/icons/style.css", media:'all'}
         %link{type:'text/less', rel:'stylesheet', href:'{{STATIC_URL}}less/print.less', media:'print'}
         %link{type:"text/css", rel:"stylesheet", href:"{{ STATIC_URL }}css/temba-components.css"}
@@ -163,35 +130,30 @@
       %script{src:"//html5shim.googlecode.com/svn/trunk/html5.js"}
     <![endif]-->
 
--load smartmin
 {% block body %}
 
 %body#pageBody.bg-gradient
-  -include "components-body.html"
 
+  -if COMPONENTS_DEV_MODE
+    <script type="module">
+      import '../out-tsc/temba-modules.js';
+    </script>
+  -else 
+    -include "components-body.html"
+  
   -block temba-store
     
     -if user.is_authenticated
       %temba-store(
-        completions="/mr/docs/completion.json"
-        functions="/mr/docs/functions.json"
+        completion="/mr/docs/{{ LANGUAGE_CODE }}/editor.json"
         fields="/api/v2/fields.json"
         globals="/api/v2/globals.json")
 
   .flex.flex-col.h-full
     <!-- Header -->
-    #header
-      &nbsp;
-
-    %a#big-logo.logo.icon-logo{href:"{% if user.is_authenticated %}{% url 'msgs.msg_inbox' %}{% else %}/{% endif %}", title:"{{brand.name}}", class:"hover:no-underline"}
-      .name
-        {{brand.name}}
-
-    -block nav
-      -include 'includes/nav.html'
 
     -if user_org
-      .org-header
+      .org-header.self-end
         -if user_orgs|length > 1
           .pull-right.toggle
             .icon-menu-2
@@ -205,6 +167,20 @@
               .org
                 %a.posterize{href:'{% url "orgs.org_choose"%}?organization={{org.pk}}'}
                   {{ org.name }}
+
+
+
+    #header
+      &nbsp;
+
+
+    %a#big-logo.logo.icon-logo{href:"{% if user.is_authenticated %}{% url 'msgs.msg_inbox' %}{% else %}/{% endif %}", title:"{{brand.name}}", class:"hover:no-underline"}
+      .name
+        {{brand.name}}
+
+    -block nav
+      -include 'includes/nav.html'
+
 
     -if messages
       -block messages
@@ -248,11 +224,12 @@
             
             -block post-content
 
-    .footer.text-center.py-12.bg-gray-200.text-gray-500
-      {{ request.branding.credits|safe }}
+    -block footer
+      .footer.text-center.py-12.bg-gray-200.text-gray-500
+        {{ request.branding.credits|safe }}
 
   -trans 'Delete' as title
-  %temba-dialog#general-delete-confirmation{header:"{{title|escapejs}}", primaryButtonName:"{{title|escapejs}}", destructive: "true"}
+  %temba-dialog#general-delete-confirmation.hidden{header:"{{title|escapejs}}", primaryButtonName:"{{title|escapejs}}", destructive: "true"}
     .p-6.confirmation-body
       -trans "Are you sure you want to continue? This cannot be undone."
 
@@ -289,6 +266,7 @@
       function removalConfirmation(removal, buttonName) {
   
         var modal = document.querySelector("#general-delete-confirmation");
+        modal.classList.remove("hidden");
 
         // set modal deets
         var title = document.querySelector('.' + removal + ' > .title').innerHTML;
@@ -330,18 +308,6 @@
         }
       }
 
-      function initSelect2Fields() {
-        $('.select2tag').select2({
-          containerCssClass: 'select2-container',
-          tags:[], tokenSeparators: [","], formatNoMatches:function(term){return '';}
-        });
-
-        $('.select2tag').find("ul.select2-choices").sortable({
-          start: function() { $(".select2tag").select2("onSortStart"); },
-          update: function() { $(".select2tag").select2("onSortEnd"); }
-        });
-      }
-
     -block extra-script
 
     <script type="text/javascript" src="{{ STATIC_URL }}js/libs/jquery.url.js"></script>
@@ -355,8 +321,6 @@
         if (navigator.appVersion.indexOf("Win")!=-1) {
           $("html").addClass("windows");
         }
-
-        // initSelect2Fields();
 
         $(".btn").tooltip();
 
@@ -411,5 +375,6 @@
 
       });
 {% endblock body %}
+
 
 </html>

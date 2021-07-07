@@ -1,22 +1,12 @@
+import ipaddress
 import json
 import socket
 from urllib import parse
 
 from django import forms
 from django.core.validators import URLValidator
-from django.forms import ValidationError, widgets
+from django.forms import ValidationError
 from django.utils.translation import ugettext_lazy as _
-
-
-class Select2Field(forms.Field):
-    default_error_messages = {}
-    widget = widgets.TextInput(attrs={"class": "select2_field", "style": "width:520px"})
-
-    def __init__(self, **kwargs):  # pragma: needs cover
-        super().__init__(**kwargs)
-
-    def to_python(self, value):  # pragma: needs cover
-        return value
 
 
 class JSONField(forms.Field):
@@ -42,7 +32,7 @@ def validate_external_url(value):
 
     # if it isn't http or https, fail
     if parsed.scheme not in ("http", "https"):
-        raise ValidationError(_("%(value)s must be http or https scheme"), params={"value": value})
+        raise ValidationError(_("Must use HTTP or HTTPS."), params={"value": value})
 
     # resolve the host
     try:
@@ -51,11 +41,12 @@ def validate_external_url(value):
             host = parsed.netloc[: -(len(str(parsed.port)) + 1)]
         ip = socket.gethostbyname(host)
     except Exception:
-        raise ValidationError(_("%(value)s host cannot be resolved"), params={"value": value})
+        raise ValidationError(_("Unable to resolve host."), params={"value": value})
 
-    # check it isn't localhost
-    if ip in ("127.0.0.1", "::1"):
-        raise ValidationError(_("%(value)s cannot be localhost"), params={"value": value})
+    ip = ipaddress.ip_address(ip)
+
+    if ip.is_loopback or ip.is_multicast or ip.is_private or ip.is_link_local:
+        raise ValidationError(_("Cannot be a local or private host."), params={"value": value})
 
 
 class ExternalURLField(forms.URLField):
@@ -74,6 +65,12 @@ class CheckboxWidget(forms.CheckboxInput):
 class SelectWidget(forms.Select):
     template_name = "utils/forms/select.haml"
     is_annotated = True
+
+    def create_option(self, name, value, label, selected, index, subindex=None, attrs=None):
+        option = super().create_option(name, value, label, selected, index, subindex, attrs)
+        if hasattr(self.choices, "icons"):
+            option["icon"] = self.choices.icons.get(value)
+        return option
 
     def format_value(self, value):
         def format_single(v):
@@ -140,6 +137,31 @@ class OmniboxChoice(forms.Widget):
         return selected
 
 
+class TembaChoiceIterator(forms.models.ModelChoiceIterator):
+    def __init__(self, field):
+        super().__init__(field)
+        self.icons = dict()
+
+    def choice(self, obj):
+        value = self.field.prepare_value(obj)
+        option = (value, self.field.label_from_instance(obj))
+
+        if hasattr(obj, "get_icon"):
+            self.icons[value] = obj.get_icon()
+
+        return option
+
+
+class TembaChoiceField(forms.ModelChoiceField):
+    iterator = TembaChoiceIterator
+    widget = SelectWidget()
+
+
+class TembaMultipleChoiceField(forms.ModelMultipleChoiceField):
+    iterator = TembaChoiceIterator
+    widget = SelectMultipleWidget()
+
+
 class ArbitraryChoiceField(forms.ChoiceField):  # pragma: needs cover
     def valid_value(self, value):
         return True
@@ -155,10 +177,9 @@ class ArbitraryJsonChoiceField(forms.ChoiceField):  # pragma: needs cover
         return {"jsonValue": True}
 
     def clean(self, value):
-        if value is None:
-            value = ""
+        super().validate(value)
 
-        if isinstance(value, (str)):
+        if isinstance(value, str):
             return json.loads(value)
 
         if isinstance(value, (tuple, list)):
@@ -170,12 +191,12 @@ class ArbitraryJsonChoiceField(forms.ChoiceField):  # pragma: needs cover
         if value is None:
             return value
 
-        if isinstance(value, (str)):
+        if isinstance(value, str):
             return json.loads(value)
 
         if isinstance(value, (tuple, list)):
             if len(value) > 0:
-                if isinstance(value[0], (dict)):
+                if isinstance(value[0], dict):
                     return value
                 else:
                     return [json.loads(_) for _ in value]

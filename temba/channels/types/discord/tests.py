@@ -2,7 +2,6 @@ from unittest.mock import patch
 
 import requests
 
-from django.test import override_settings
 from django.urls import reverse
 
 from temba.contacts.models import URN
@@ -36,7 +35,6 @@ class DiscordTypeTest(TembaTest):
         super().setUp()
 
     @patch("requests.get", side_effect=mocked_requests_get)
-    @override_settings(IS_PROD=True)
     def test_claim(self, mocked):
         url = reverse("channels.types.discord.claim")
 
@@ -88,12 +86,12 @@ class DiscordTypeTest(TembaTest):
             response.context["form"].errors["auth_token"][0],
         )
 
-        contact = self.create_contact("Discord User", urn=URN.from_discord("750841288886321253"))
+        contact = self.create_contact("Discord User", urns=[URN.from_discord("750841288886321253")])
 
-        # make sure we our telegram channel satisfies as a send channel
+        # make sure we our discord channel satisfies as a send channel
         response = self.client.get(reverse("contacts.contact_read", args=[contact.uuid]))
         send_channel = response.context["send_channel"]
         self.assertIsNotNone(send_channel)
         self.assertEqual(send_channel.channel_type, "DS")
         # Release the channel. We don't test it separately, so this gives us full coverage
-        channel.release()
+        channel.release(self.admin)

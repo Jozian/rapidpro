@@ -42,13 +42,13 @@ class ClientTest(TembaTest):
 
 
 class ZendeskTypeTest(TembaTest):
-    def test_is_available(self):
+    def test_is_available_to(self):
         with override_settings(ZENDESK_CLIENT_ID="", ZENDESK_CLIENT_SECRET=""):
-            self.assertFalse(ZendeskType().is_available())
+            self.assertFalse(ZendeskType().is_available_to(self.admin))
         with override_settings(ZENDESK_CLIENT_ID="temba", ZENDESK_CLIENT_SECRET=""):
-            self.assertFalse(ZendeskType().is_available())
+            self.assertFalse(ZendeskType().is_available_to(self.admin))
         with override_settings(ZENDESK_CLIENT_ID="temba", ZENDESK_CLIENT_SECRET="sesame"):
-            self.assertTrue(ZendeskType().is_available())
+            self.assertTrue(ZendeskType().is_available_to(self.admin))
 
     @override_settings(ZENDESK_CLIENT_ID="temba", ZENDESK_CLIENT_SECRET="sesame")
     @patch("temba.tickets.types.zendesk.views.random_string")
@@ -106,7 +106,7 @@ class ZendeskTypeTest(TembaTest):
             response = self.client.get(connect_url + "?code=please&state=temba")
 
             ticketer = Ticketer.objects.filter(ticketer_type="zendesk", is_active=True).order_by("id").last()
-            self.assertEqual("Zendesk (temba)", ticketer.name)
+            self.assertEqual("temba", ticketer.name)
             self.assertEqual({"oauth_token": "236272", "secret": "RAND346", "subdomain": "temba"}, ticketer.config)
             self.assertRedirect(response, reverse("tickets.types.zendesk.configure", args=[ticketer.uuid]))
 

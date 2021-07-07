@@ -3,7 +3,7 @@ from typing import List
 from django.db import models
 from django.db.models import Model
 from django.utils import timezone
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ngettext, ugettext_lazy as _
 
 from temba import mailroom
 from temba.contacts.models import Contact, ContactField, ContactGroup
@@ -123,7 +123,7 @@ class Campaign(TembaModel):
 
             # deactivate all of our events, we'll recreate these
             for event in campaign.events.all():
-                event.release()
+                event.release(user)
 
             # fill our campaign with events
             for event_spec in campaign_def[Campaign.EXPORT_EVENTS]:
@@ -206,7 +206,7 @@ class Campaign(TembaModel):
                 .select_related("flow")
             )
             for event in events:
-                event.flow.restore()
+                event.flow.restore(user)
 
             campaign.schedule_events_async()
 
@@ -261,14 +261,14 @@ class Campaign(TembaModel):
 
         return sorted(events, key=lambda e: e.relative_to.pk * 100_000 + e.minute_offset())
 
-    def _full_release(self):
+    def delete(self):
         """
         Deletes this campaign completely
         """
         for event in self.events.all():
-            event._full_release()
+            event.delete()
 
-        self.delete()
+        super().delete()
 
     def __str__(self):
         return f'Campaign[uuid={self.uuid}, name="{self.name}"]'
@@ -355,7 +355,7 @@ class CampaignEvent(TembaModel):
             )
 
         if isinstance(message, str):
-            base_language = org.primary_language.iso_code if org.primary_language else "base"
+            base_language = org.flow_languages[0] if org.flow_languages else "base"
             message = {base_language: message}
 
         flow = Flow.create_single_message(org, user, message, base_language)
@@ -435,12 +435,6 @@ class CampaignEvent(TembaModel):
         self.flow.name = "Single Message (%d)" % self.id
         self.flow.save(update_fields=["name"])
 
-    def single_unit_display(self):
-        return self.get_unit_display()[:-1]
-
-    def abs_offset(self):
-        return abs(self.offset)
-
     def minute_offset(self):
         """
         Returns an offset that can be used to sort events that go against the same relative_to variable.
@@ -461,6 +455,33 @@ class CampaignEvent(TembaModel):
 
         return offset
 
+    @property
+    def offset_display(self):
+        """
+        Returns the offset and units as a human readable string
+        """
+        count = abs(self.offset)
+        if self.offset < 0:
+            if self.unit == "M":
+                return ngettext("%d minute before", "%d minutes before", count) % count
+            elif self.unit == "H":
+                return ngettext("%d hour before", "%d hours before", count) % count
+            elif self.unit == "D":
+                return ngettext("%d day before", "%d days before", count) % count
+            elif self.unit == "W":
+                return ngettext("%d week before", "%d weeks before", count) % count
+        elif self.offset > 0:
+            if self.unit == "M":
+                return ngettext("%d minute after", "%d minutes after", count) % count
+            elif self.unit == "H":
+                return ngettext("%d hour after", "%d hours after", count) % count
+            elif self.unit == "D":
+                return ngettext("%d day after", "%d days after", count) % count
+            elif self.unit == "W":
+                return ngettext("%d week after", "%d weeks after", count) % count
+        else:
+            return _("on")
+
     def schedule_async(self):
         on_transaction_commit(lambda: mailroom.queue_schedule_campaign_event(self))
 
@@ -470,7 +491,7 @@ class CampaignEvent(TembaModel):
         and when a change is made that would invalidate existing event fires, we deactivate the event and recreate it.
         The event fire handling code knows to ignore event fires for deactivated event.
         """
-        self.release()
+        self.release(self.created_by)
 
         # clone our event into a new event
         if self.event_type == CampaignEvent.TYPE_FLOW:
@@ -500,32 +521,32 @@ class CampaignEvent(TembaModel):
                 self.start_mode,
             )
 
-    def release(self):
+    def release(self, user):
         """
         Marks the event inactive and releases flows for single message flows
         """
         # we need to be inactive so our fires are noops
         self.is_active = False
-        self.save(update_fields=("is_active",))
+        self.modified_by = user
+        self.save(update_fields=("is_active", "modified_by", "modified_on"))
 
         # detach any associated flow starts
         self.flow_starts.all().update(campaign_event=None)
 
         # if flow isn't a user created flow we can delete it too
         if self.event_type == CampaignEvent.TYPE_MESSAGE:
-            self.flow.release()
+            self.flow.release(user)
 
-    def _full_release(self):
+    def delete(self):
         """
         Deletes this event completely along with associated fires
         """
-        self.release()
 
         # delete any associated fires
         self.fires.all().delete()
 
         # and ourselves
-        self.delete()
+        super().delete()
 
     def __str__(self):
         return f'Event[relative_to={self.relative_to.key}, offset={self.offset}, flow="{self.flow.name}"]'
