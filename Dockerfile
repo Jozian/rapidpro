@@ -28,6 +28,8 @@ RUN curl -sL https://deb.nodesource.com/setup_14.x | bash - \
 
 
 FROM base AS pybuilder
+ENV POETRY_VIRTUALENVS_CREATE=false
+
 RUN apt-get -yq update \
         && DEBIAN_FRONTEND=noninteractive apt-get install -y \
                 build-essential \
@@ -38,9 +40,11 @@ RUN apt-get -yq update \
                 libpq-dev \
         && rm -rf /var/lib/apt/lists/* \
         && apt-get clean
-COPY --chown=rapidpro pip-freeze.txt ./
+COPY --chown=rapidpro pyproject.toml poetry.lock ./
 USER rapidpro
-RUN pip install --no-cache-dir --user -r pip-freeze.txt
+RUN pip install --no-cache-dir --user poetry
+RUN poetry install --no-dev
+
 
 
 FROM base AS rapidpro
