@@ -87,10 +87,10 @@ down:
 	@docker-compose down --remove-orphans
 
 up-prod: network
-	@docker-compose -f ./docker-compose.yml -f ./docker-compose.prod.yml up
+	@docker-compose -f ./docker-compose.yml -f ./docker-compose.prod.yml --env-file ./.env up
 
 up-prod-d: network
-	@docker-compose -f ./docker-compose.yml -f ./docker-compose.prod.yml up -d
+	@docker-compose -f ./docker-compose.yml -f ./docker-compose.prod.yml --env-file ./.env up -d
 
 down-prod:
 	@docker-compose -f ./docker-compose.yml -f ./docker-compose.prod.yml down --remove-orphans
