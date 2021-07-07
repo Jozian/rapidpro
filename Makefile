@@ -84,7 +84,7 @@ up-d: network
 	# @docker-compose up ${DOCKER_HUB_PRJ}
 
 down:
-	@docker-compose down
+	@docker-compose down --remove-orphans
 
 up-prod: network
 	@docker-compose -f ./docker-compose.yml -f ./docker-compose.prod.yml up
