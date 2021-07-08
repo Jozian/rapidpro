@@ -1,6 +1,6 @@
 # TAG=$(shell date +%Y%m%d)
 TAG=latest
-BRANCH := rp-v6.2.4-docker
+BRANCH := rp-v6.4.1+docker
 DOCKER_HUB_ORG ?= jozian
 DOCKER_HUB_PRJ ?= rapidpro
 DOCKER_HUB_COURIER ?= courier
