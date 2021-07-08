@@ -107,16 +107,16 @@ createsuperuser:
 reset:
 	# @sudo rm -rf ../rapidpro-data/
 
-	@mkdir ../primero-data/
+	@mkdir ../rapidpro-data/
 	@mkdir -p ../rapidpro-data/rapidpro/sitestatic/
 	@cp temba/settings.py.dev.docker ../rapidpro-data/rapidpro/
 	@cp -a static/* ../rapidpro-data/rapidpro/sitestatic/
 
 	@cp -a templates/ ../rapidpro-data/rapidpro/
 
-	@mkdir -p ../primero-data/db/data/
+	@mkdir -p ../rapidpro-data/db/data/
 
-	@mkdir ../primero-data/letsencrypt/
+	@mkdir ../rapidpro-data/letsencrypt/
 
 	@mkdir -p ../rapidpro-data/es/data/
 
