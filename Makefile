@@ -111,6 +111,7 @@ reset:
 	@mkdir -p ../rapidpro-data/rapidpro/sitestatic/
 	@cp temba/settings.py.dev.docker ../rapidpro-data/rapidpro/
 	@cp -a static/* ../rapidpro-data/rapidpro/sitestatic/
+	@mkdir -p ../rapidpro-data/rapidpro/sitestatic/CACHE
 
 	@cp -a templates/ ../rapidpro-data/rapidpro/
 
