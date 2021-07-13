@@ -4,6 +4,8 @@ version: "3.8"
 services:
   traefik:
     image: "traefik:v2.4"
+    env_file:
+      - ../rapidpro-data/.env.prod
     command:
       - "--api.insecure=true"
       - "--providers.docker=true"
@@ -26,6 +28,8 @@ services:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
 
   rapidpro:
+    env_file:
+      - ../rapidpro-data/.env.prod
     environment:
       - RAPIDPRO_STORAGE_URL=https://${HOSTNAME}/media
       - DB_NAME=${DB_NAME}
@@ -46,7 +50,13 @@ services:
     volumes:
       - ../rapidpro-data/rapidpro/settings.py.prod.docker:/srv/rapidpro/rapidpro/temba/settings.py
 
+  postgresql:
+    env_file:
+      - ../rapidpro-data/.env.prod
+
   mailroom:
+    env_file:
+      - ../rapidpro-data/.env.prod
     environment:
       - MAILROOM_LOG_LEVEL=error
     labels:
@@ -63,6 +73,8 @@ services:
       - "traefik.http.middlewares.traefik-redirectscheme.redirectscheme.scheme=https"
 
   courier:
+    env_file:
+      - ../rapidpro-data/.env.prod
     labels:
       - "traefik.enable=true"
       - "traefik.http.services.courier.loadbalancer.server.port=8080"
@@ -81,3 +93,7 @@ services:
       - ../rapidpro-data/.env.prod
     volumes:
       - ../rapidpro-data/rapidpro/settings.py.prod.docker:/srv/rp-celery/rapidpro/temba/settings.py
+
+  rp-archiver:
+    env_file:
+      - ../rapidpro-data/.env.prod
