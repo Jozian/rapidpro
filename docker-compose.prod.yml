@@ -28,6 +28,9 @@ services:
   rapidpro:
     environment:
       - RAPIDPRO_STORAGE_URL=https://${HOSTNAME}/media
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
     labels:
       - "traefik.enable=true"
       - "traefik.http.services.rapidpro.loadbalancer.server.port=8000"
