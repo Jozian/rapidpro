@@ -87,10 +87,10 @@ down:
 	@docker-compose down --remove-orphans
 
 up-prod: network
-	@docker-compose -f ./docker-compose.yml -f ./docker-compose.prod.yml --env-file ./.env up
+	@docker-compose -f ./docker-compose.yml -f ./docker-compose.prod.yml --env-file ../rapidpro-data/.env.prod up
 
 up-prod-d: network
-	@docker-compose -f ./docker-compose.yml -f ./docker-compose.prod.yml --env-file ./.env up -d
+	@docker-compose -f ./docker-compose.yml -f ./docker-compose.prod.yml --env-file ../rapidpro-data/.env.prod up -d
 
 down-prod:
 	@docker-compose -f ./docker-compose.yml -f ./docker-compose.prod.yml down --remove-orphans
