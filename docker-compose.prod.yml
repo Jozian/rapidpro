@@ -43,6 +43,8 @@ services:
       - "traefik.http.routers.rapidpro-websecure.tls=true"
       - "traefik.http.routers.rapidpro-websecure.tls.certresolver=le"
       - "traefik.http.middlewares.traefik-redirectscheme.redirectscheme.scheme=https"
+    volumes:
+      - ../rapidpro-data/rapidpro/settings.py.prod.docker:/srv/rapidpro/rapidpro/temba/settings.py
 
   mailroom:
     environment:
@@ -73,3 +75,9 @@ services:
       - "traefik.http.routers.courier-websecure.tls=true"
       - "traefik.http.routers.courier-websecure.tls.certresolver=le"
       - "traefik.http.middlewares.traefik-redirectscheme.redirectscheme.scheme=https"
+
+  rp-celery:
+    env_file:
+      - ../rapidpro-data/.env.prod
+    volumes:
+      - ../rapidpro-data/rapidpro/settings.py.prod.docker:/srv/rp-celery/rapidpro/temba/settings.py

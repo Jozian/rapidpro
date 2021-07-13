@@ -27,7 +27,6 @@ services:
     networks:
       - rapidpro
     volumes:
-      - ../rapidpro-data/rapidpro/settings.py.dev.docker:/srv/rapidpro/rapidpro/temba/settings.py
       - ../rapidpro-data/rapidpro/sitestatic:/srv/rapidpro/rapidpro/static
       - ../rapidpro-data/rapidpro/sitestatic/CACHE:/srv/rapidpro/rapidpro/sitestatic/CACHE
       - ../rapidpro-data/rapidpro/templates:/srv/rapidpro/rapidpro/templates
@@ -118,7 +117,6 @@ services:
     networks:
       - rapidpro
     volumes:
-      - ../rapidpro-data/rapidpro/settings.py.dev.docker:/srv/rp-celery/rapidpro/temba/settings.py
       - ../rapidpro-data/celery/schedule:/srv/rp-celery/schedule
 
   rp-indexer:

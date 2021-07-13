@@ -10,6 +10,8 @@ services:
       - DJANGO_DEBUG=off
     ports:
       - "8000:8000"
+    volumes:
+      - ../rapidpro-data/rapidpro/settings.py.dev.docker:/srv/rapidpro/rapidpro/temba/settings.py
 
   elasticsearch:
     ports:
@@ -28,3 +30,5 @@ services:
 
   rp-celery:
     command: ["--loglevel=INFO"]
+    volumes:
+      - ../rapidpro-data/rapidpro/settings.py.dev.docker:/srv/rp-celery/rapidpro/temba/settings.py
