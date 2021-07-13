@@ -72,8 +72,9 @@ push:
 	docker push ${DOCKER_HUB_ORG}/${DOCKER_HUB_PRJ}:${TAG}
 
 setup-hugepage:
-	@sudo sysctl -w vm.max_map_count=262144
-	@echo never | sudo tee /sys/kernel/mm/transparent_hugepage/enabled
+	@sudo sudo apt install sysfsutils
+	@echo "vm.max_map_count=262144" | sudo tee /etc/sysctl.d/99-max-map-count.conf
+	@echo "kernel/mm/transparent_hugepage/enabled = never" | sudo tee /etc/sysfs.d/99-hugepage.conf
 
 up: network
 	@docker-compose up
