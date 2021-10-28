@@ -40,4 +40,4 @@ jobs:
           context: .
           platforms: linux/amd64
           push: true
-          tags: gchr.io/jozian/rapidpro:latest
+          tags: ghcr.io/jozian/rapidpro:latest
