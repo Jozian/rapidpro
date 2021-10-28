@@ -40,4 +40,4 @@ jobs:
           context: .
           platforms: linux/amd64
           push: true
-          tags: gchr.io/${{ github.repository_owner }}/rapidpro:latest
+          tags: gchr.io/jozian/rapidpro:latest
