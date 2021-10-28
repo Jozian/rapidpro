@@ -4,6 +4,9 @@ name: Build Docker Containers
 
 # Controls when the workflow will run
 on:
+  push:
+    branches: 
+      - "rp-v6.4.2+docker"
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
