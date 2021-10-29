@@ -34,10 +34,19 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
       -
-        name: Build and push
+        name: Build and push Main Docker Image
         uses: docker/build-push-action@v2
         with:
           context: .
           platforms: linux/amd64
           push: true
           tags: ghcr.io/jozian/rapidpro:latest
+      -
+        name: Build and push Celery Docker Image
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./Dockerfile.celery
+          platforms: linux/amd64
+          push: true
+          tags: ghcr.io/jozian/rapidpro-celery:latest
