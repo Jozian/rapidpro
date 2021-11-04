@@ -6,7 +6,7 @@ COPY --chown=node package.json package-lock.json ./
 RUN npm install
 
 
-FROM python:3-buster AS base
+FROM python:3.8-buster AS base
 ENV PATH=/srv/rapidpro/.local/bin/:$PATH
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
@@ -51,7 +51,9 @@ FROM base AS rapidpro
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1
 COPY --chown=rapidpro --from=jsbuilder /srv/rapidpro/node_modules/ ./node_modules/
 COPY --chown=rapidpro --from=pybuilder /srv/rapidpro/.local /srv/rapidpro/.local
+RUN chown rapidpro:rapidpro /srv/rapidpro/rapidpro
 COPY --chown=rapidpro . /srv/rapidpro/rapidpro/
+
 USER rapidpro
 EXPOSE 8000
 ENTRYPOINT ["/srv/rapidpro/rapidpro/entrypoint"]
