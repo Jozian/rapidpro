@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: courier-deploy
+  name: courier-deploy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: courier
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: courier
+    spec:
+      containers:
+      - image: ghcr.io/jozian/courier:rp-v6.4.1-docker
+      # - image: nginx
+        name: courier
+        ports:
+        - containerPort: 8080
+        resources: {}
+        env:
+          - name: COURIER_REDIS
+            value: "redis://10.1.0.12:6379/15"
+          - name: COURIER_DB
+            value: "postgres://postgres:temba@temba-postgres/postgres?sslmode=disable"
+status: {}
