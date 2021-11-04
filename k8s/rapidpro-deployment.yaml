@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: rapidpro
+  name: rapidpro
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rapidpro
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: rapidpro
+    spec:
+      containers:
+      - image: ghcr.io/jozian/rapidpro:rp-v6.4.2-docker
+      # - image: nginx
+        name: rapidpro
+        ports:
+        - containerPort: 8000
+        resources: {}
+        env:
+          - name: DATABASE_URL
+            value: "postgres://postgres:temba@temba-postgres/postgres?sslmode=disable"
+          - name: MANAGEPY_INIT_DB
+            value: "on"
+          - name: MANAGEPY_COLLECTSTATIC
+            value: "on"
+          - name: MANAGEPY_COMPRESS
+            value: "on"
+          - name: MANAGEPY_MIGRATE
+            value: "on"
+          - name: SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                name: rapidpro-secret
+                key: secret-key
+        volumeMounts:
+          - mountPath: /srv/rapidpro/rapidpro/temba/settings.py
+            name: settings
+      # - ../rapidpro-data/rapidpro/sitestatic:/srv/rapidpro/rapidpro/static
+      # - ../rapidpro-data/rapidpro/sitestatic/CACHE:/srv/rapidpro/rapidpro/sitestatic/CACHE
+      # - ../rapidpro-data/rapidpro/templates:/srv/rapidpro/rapidpro/templates
+          # - mountPath: /srv/rapidpro/rapidpro/static
+          #   name: static
+          # - mountPath: /srv/rapidpro/rapidpro/sitestatic
+          #   name: sitestatic
+          # # - mountPath: /srv/rapidpro/rapidpro/templates
+          # #   name: templates
+              
+      volumes:
+        - name: settings
+          hostPath:
+            path: /Users/awen/jozian/rapidpro/k8s/settings.py.k8s
+            type: File
+        - name: static
+          emptyDir: {}
+        - name: sitestatic
+          emptyDir: {}
+        - name: templates
+          emptyDir: {}
+
+status: {}
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app: rapidpro
+  name: rapidpro
+spec:
+  ports:
+  - port: 8000
+    protocol: TCP
+    targetPort: 8000
+  type: LoadBalancer
+  selector:
+    app: rapidpro
+status:
+  loadBalancer: {}
