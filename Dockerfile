@@ -51,13 +51,8 @@ FROM base AS rapidpro
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1
 COPY --chown=rapidpro --from=jsbuilder /srv/rapidpro/node_modules/ ./node_modules/
 COPY --chown=rapidpro --from=pybuilder /srv/rapidpro/.local /srv/rapidpro/.local
-<<<<<<< HEAD
 RUN chown rapidpro:rapidpro /srv/rapidpro/rapidpro
 COPY --chown=rapidpro . /srv/rapidpro/rapidpro/
-
-=======
-COPY --chown=rapidpro . /srv/rapidpro/rapidpro/
->>>>>>> main
 USER rapidpro
 EXPOSE 8000
 ENTRYPOINT ["/srv/rapidpro/rapidpro/entrypoint"]
