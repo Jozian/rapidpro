@@ -23,16 +23,8 @@ class Campaign(TembaModel):
     EXPORT_EVENTS = "events"
 
     org = models.ForeignKey(Org, related_name="campaigns", on_delete=models.PROTECT)
-
-    name = models.CharField(max_length=MAX_NAME_LEN, help_text=_("The name of this campaign"))
-
-    group = models.ForeignKey(
-        ContactGroup,
-        on_delete=models.PROTECT,
-        help_text=_("The group this campaign operates on"),
-        related_name="campaigns",
-    )
-
+    name = models.CharField(max_length=MAX_NAME_LEN)
+    group = models.ForeignKey(ContactGroup, on_delete=models.PROTECT, related_name="campaigns")
     is_archived = models.BooleanField(default=False)
 
     @classmethod
@@ -273,6 +265,10 @@ class Campaign(TembaModel):
     def __str__(self):
         return f'Campaign[uuid={self.uuid}, name="{self.name}"]'
 
+    class Meta:
+        verbose_name = _("Campaign")
+        verbose_name_plural = _("Campaigns")
+
 
 class CampaignEvent(TembaModel):
     """
@@ -412,6 +408,10 @@ class CampaignEvent(TembaModel):
             hours.append((i, "at %s:00 %s" % (hour, period)))
         return hours
 
+    @property
+    def name(self):
+        return f"{self.campaign.name} ({self.offset_display} {self.relative_to.name})"
+
     def get_message(self, contact=None):
         if not self.message:
             return None
@@ -550,6 +550,10 @@ class CampaignEvent(TembaModel):
 
     def __str__(self):
         return f'Event[relative_to={self.relative_to.key}, offset={self.offset}, flow="{self.flow.name}"]'
+
+    class Meta:
+        verbose_name = _("Campaign Event")
+        verbose_name_plural = _("Campaign Events")
 
 
 class EventFire(Model):
