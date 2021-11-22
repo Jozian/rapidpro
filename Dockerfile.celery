@@ -1,4 +1,4 @@
-FROM python:3-buster AS base
+FROM python:3.9-buster AS base
 ENV PATH=/srv/rp-celery/.local/bin/:/srv/rp-celery/bin:$PATH
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
