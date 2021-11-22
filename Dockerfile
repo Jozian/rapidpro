@@ -6,7 +6,7 @@ COPY --chown=node package.json package-lock.json ./
 RUN npm install
 
 
-FROM python:3-buster AS base
+FROM python:3.9-buster AS base
 ENV PATH=/srv/rapidpro/.local/bin/:$PATH
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
