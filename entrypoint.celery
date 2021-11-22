@@ -10,11 +10,11 @@ if [ ! -e "./temba/settings.py" ]; then
 fi
 
 exec celery \
-    beat \
     --workdir=/srv/rp-celery/rapidpro \
     --app=temba \
+    --broker="${REDIS_URL}" \
+    beat \
     --schedule=/srv/rp-celery/schedule/celerybeat-schedule \
     --loglevel=INFO \
     --pidfile=/tmp/celery.pid \
-    --broker=${REDIS_URL} \
     ${CMD}
