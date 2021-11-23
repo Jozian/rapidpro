@@ -15,7 +15,7 @@ services:
       - mailroom
     environment:
       - DATABASE_URL=postgresql://${DB_USER}:${DB_PASS}@postgresql/${DB_NAME}
-      - REDIS_URL=redis://redis:6379/0
+      - REDIS_URL=redis://redis:6379/15
       - SECRET_KEY=super-secret-key
       - MANAGEPY_COLLECTSTATIC=on
       - MANAGEPY_COMPRESS=on
