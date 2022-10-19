@@ -97,3 +97,22 @@ services:
   rp-archiver:
     env_file:
       - ../rapidpro-data/.env.prod
+  gostatic:
+    image: "pierrezemb/gostatic"
+    volumes:
+      - ../rapidpro-data/rapidpro/sitestatic:/srv/http/sitestatic
+      - ../rapidpro-data/rapidpro/static:/srv/http/static
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.gostatic.loadbalancer.server.port=8043"
+      - "traefik.http.routers.gostatic-web.rule=Host(`${HOSTNAME}`) && (PathPrefix(`/sitestatic/`) || PathPrefix(`/static/`))"
+      - "traefik.http.routers.gostatic-web.entrypoints=web"
+      - "traefik.http.routers.gostatic-web.middlewares=traefik-redirectscheme"
+      - "traefik.http.routers.gostatic-websecure.rule=Host(`${HOSTNAME}`) && (PathPrefix(`/sitestatic/`) || PathPrefix(`/static/`))"
+      - "traefik.http.routers.gostatic-websecure.entrypoints=websecure"
+      - "traefik.http.routers.gostatic-websecure.tls=true"
+      - "traefik.http.routers.gostatic-websecure.tls.certresolver=le"
+      - "traefik.http.middlewares.traefik-redirectscheme.redirectscheme.scheme=https"
+    restart: always
+    networks:
+      - rapidpro

@@ -14,7 +14,7 @@ if [ ! -e "./temba/settings.py" ]; then
 fi
 
 if [ "${RAPIDPRO_ENV}" = "production" ]; then
-  exec gunicorn temba/wsgi.py --bind=0.0.0.0:8000 "${@}"
+  exec gunicorn temba.wsgi:application --bind=0.0.0.0:8000 "${@}"
 else
   exec python3 manage.py runserver 0.0.0.0:8000 "${@}"
 fi
