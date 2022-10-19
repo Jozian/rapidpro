@@ -41,16 +41,16 @@ RUN apt-get -yq update \
         && rm -rf /var/lib/apt/lists/* \
         && apt-get clean
 COPY --chown=rapidpro pyproject.toml poetry.lock ./
+RUN pip install --no-cache-dir poetry
+RUN poetry install --only main
 USER rapidpro
-RUN pip install --no-cache-dir --user poetry
-RUN pip install --user --requirement <(poetry export --dev --format requirements.txt)
-RUN pip install --user --no-deps .
 
-FROM base AS rapidpro
+
+
+FROM pybuilder AS rapidpro
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1
 COPY --chown=rapidpro --from=jsbuilder /srv/rapidpro/node_modules/ ./node_modules/
 COPY --chown=rapidpro --from=pybuilder /srv/rapidpro/.local /srv/rapidpro/.local
-COPY --chown=rapidpro . /srv/rapidpro/rapidpro/
 USER rapidpro
 EXPOSE 8000
 ENTRYPOINT ["/srv/rapidpro/rapidpro/entrypoint"]
