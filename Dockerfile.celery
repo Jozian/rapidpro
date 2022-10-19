@@ -27,13 +27,12 @@ RUN apt-get -yq update \
         && rm -rf /var/lib/apt/lists/* \
         && apt-get clean
 COPY --chown=rp-celery pyproject.toml poetry.lock ./
+RUN pip install --no-cache-dir poetry
+RUN poetry install --only main
 USER rp-celery
-RUN pip install --no-cache-dir --user poetry
-RUN poetry install --no-dev
 
-FROM base AS rp-celery
+FROM pybuilder AS rp-celery
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1
-COPY --chown=rp-celery --from=pybuilder /srv/rp-celery/.local /srv/rp-celery/.local
 COPY --chown=rp-celery . /srv/rp-celery/rapidpro/
 COPY --chown=rp-celery ./entrypoint.celery /srv/rp-celery/bin/entrypoint
 USER rp-celery
