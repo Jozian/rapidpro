@@ -43,9 +43,8 @@ RUN apt-get -yq update \
 COPY --chown=rapidpro pyproject.toml poetry.lock ./
 USER rapidpro
 RUN pip install --no-cache-dir --user poetry
-RUN poetry install --no-dev
-
-
+RUN pip install --user --requirement <(poetry export --dev --format requirements.txt)
+RUN pip install --user --no-deps .
 
 FROM base AS rapidpro
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1
