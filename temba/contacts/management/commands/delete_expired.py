@@ -41,7 +41,7 @@ class Command(BaseCommand):  # pragma: no cover
         # Release the contacts
         user = User.objects.filter(username="AnonymousUser").first()
         for contact in contacts:
-            print("Releasing contact id:" % contact.id)
+            print(f"Releasing contact id: {contact.id}")
             contact.release(user)
         print("Full deletion may take a moment, it depends on the celery worker. Make sure the celery worker is running.")
 
