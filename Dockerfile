@@ -7,7 +7,7 @@ RUN npm install -g yarn
 RUN yarn install --immutable
 
 
-FROM python:3.12-buster AS base
+FROM python:3.11-bookworm AS base
 ENV PATH=/srv/rapidpro/.local/bin/:$PATH
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
