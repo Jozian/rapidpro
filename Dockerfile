@@ -12,13 +12,14 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 RUN adduser --uid 1000 --disabled-password --gecos '' --home /srv/rapidpro rapidpro
 WORKDIR /srv/rapidpro/rapidpro
-RUN curl -sL https://deb.nodesource.com/setup_14.x | bash - \
+RUN echo "Installing Packages" \
         && apt-get -yq update \
         && DEBIAN_FRONTEND=noninteractive apt-get install -y \
                 unattended-upgrades \
                 # rapidpro dependencies
                 libgdal-dev \
                 nodejs \
+                npm \
                 # ssl certs to external services
                 ca-certificates \
         && npm install -g yarn \
