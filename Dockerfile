@@ -1,7 +1,6 @@
 FROM node:latest AS jsbuilder
 WORKDIR /srv/rapidpro
 RUN chown node:node -R /srv/rapidpro
-RUN npm install -g yarn
 USER node
 COPY --chown=node package.json yarn.lock ./
 RUN yarn install --immutable
@@ -18,7 +17,7 @@ RUN curl -sL https://deb.nodesource.com/setup_14.x | bash - \
         && DEBIAN_FRONTEND=noninteractive apt-get install -y \
                 unattended-upgrades \
                 # rapidpro dependencies
-                libgdal20 \
+                libgdal-dev \
                 nodejs \
                 # ssl certs to external services
                 ca-certificates \
