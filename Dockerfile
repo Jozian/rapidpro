@@ -2,11 +2,12 @@ FROM node:latest AS jsbuilder
 WORKDIR /srv/rapidpro
 RUN chown node:node -R /srv/rapidpro
 USER node
-COPY --chown=node package.json package-lock.json ./
-RUN npm install
+COPY --chown=node package.json yarn.lock ./
+RUN npm install -g yarn
+RUN yarn install --immutable
 
 
-FROM python:3.9-buster AS base
+FROM python:3.12-buster AS base
 ENV PATH=/srv/rapidpro/.local/bin/:$PATH
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
@@ -21,8 +22,8 @@ RUN curl -sL https://deb.nodesource.com/setup_14.x | bash - \
                 nodejs \
                 # ssl certs to external services
                 ca-certificates \
-        && npm install less -g \
-        && npm install coffeescript -g \
+        && npm install -g yarn \
+        && yarn global add less \
         && rm -rf /var/lib/apt/lists/* \
         && apt-get clean
 
