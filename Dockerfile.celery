@@ -15,8 +15,8 @@ RUN apt-get -yq update \
 
 FROM base AS pybuilder
 ENV POETRY_VIRTUALENVS_CREATE=false
-RUN apt-get -yq update \
-        && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+RUN apt-get -yq update 
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
                 build-essential \
                 # CFFI deps
                 libffi-dev \
@@ -24,8 +24,7 @@ RUN apt-get -yq update \
                 # psycopg2 deps
                 libpq-dev \
                 sed \
-        && rm -rf /var/lib/apt/lists/* \
-        && apt-get clean
+RUN rm -rf /var/lib/apt/lists/* && apt-get clean
 COPY --chown=rp-celery pyproject.toml poetry.lock ./
 RUN pip install --no-cache-dir poetry
 RUN poetry install --only main

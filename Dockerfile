@@ -21,11 +21,11 @@ RUN echo "Installing Packages" \
                 nodejs \
                 npm \
                 # ssl certs to external services
-                ca-certificates \
-        && npm install -g yarn \
-        && yarn global add less \
-        && rm -rf /var/lib/apt/lists/* \
-        && apt-get clean
+                ca-certificates
+
+RUN npm install -g yarn
+RUN yarn global add less 
+RUN rm -rf /var/lib/apt/lists/* && apt-get clean
 
 
 FROM base AS pybuilder
