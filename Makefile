@@ -1,6 +1,6 @@
 # TAG=$(shell date +%Y%m%d)
 TAG=latest
-BRANCH := rp-v6.4.1+docker
+BRANCH := rp-v7.4-release-docker
 DOCKER_HUB_ORG ?= jozian
 DOCKER_HUB_PRJ ?= rapidpro
 DOCKER_HUB_COURIER ?= courier
@@ -20,53 +20,53 @@ network:
 	fi
 
 build:
-	@docker-compose build --pull ${BUILD_ARGS}
+	@docker compose build --pull ${BUILD_ARGS}
 	# @docker build --tag ${DOCKER_HUB_ORG}/${DOCKER_HUB_PRJ}:${TAG} .
 
 build-no-cache:
-	@docker-compose build --pull --no-cache ${BUILD_ARGS}
+	@docker compose build --pull --no-cache ${BUILD_ARGS}
 
 build-courier:
 	# @docker build --tag ${DOCKER_HUB_ORG}/${DOCKER_HUB_COURIER}:${TAG} -f ../courier/Dockerfile ../courier
-	@docker-compose build --pull ${DOCKER_HUB_COURIER}
+	@docker compose build --pull ${DOCKER_HUB_COURIER}
 
 build-courier-no-cache:
-	@docker-compose build --pull --no-cache ${DOCKER_HUB_COURIER}
+	@docker compose build --pull --no-cache ${DOCKER_HUB_COURIER}
 
 build-mailroom:
 	# @docker build --tag ${DOCKER_HUB_ORG}/${DOCKER_HUB_MAILROOM}:${TAG} -f ../mailroom/Dockerfile ../mailroom
-	@docker-compose build --pull ${DOCKER_HUB_MAILROOM}
+	@docker compose build --pull ${DOCKER_HUB_MAILROOM}
 
 build-mailroom-no-cache:
-	@docker-compose build --pull --no-cache ${DOCKER_HUB_MAILROOM}
+	@docker compose build --pull --no-cache ${DOCKER_HUB_MAILROOM}
 
 build-rp-archiver:
 	# @docker build --tag ${DOCKER_HUB_ORG}/${DOCKER_HUB_RP-ARCHIVER}:${TAG} -f ../rp-archiver/Dockerfile ../rp-archiver
-	@docker-compose build --pull ${DOCKER_HUB_RP-ARCHIVER}
+	@docker compose build --pull ${DOCKER_HUB_RP-ARCHIVER}
 
 build-rp-archiver-no-cache:
-	@docker-compose build --pull --no-cache ${DOCKER_HUB_RP-ARCHIVER}
+	@docker compose build --pull --no-cache ${DOCKER_HUB_RP-ARCHIVER}
 
 build-rp-celery:
-	@docker-compose build --pull ${DOCKER_HUB_RP-CELERY}
+	@docker compose build --pull ${DOCKER_HUB_RP-CELERY}
 
 build-rp-celery-no-cache:
-	@docker-compose build --pull --no-cache ${DOCKER_HUB_RP-CELERY}
+	@docker compose build --pull --no-cache ${DOCKER_HUB_RP-CELERY}
 
 build-rp-discord-proxy:
 	# @docker build --tag ${DOCKER_HUB_ORG}/${DOCKER_HUB_RP-DISCORD-PROXY}:${TAG} -f ../rp-discord-proxy/Dockerfile ../rp-discord-proxy
-	@docker-compose build --pull ${DOCKER_HUB_RP-DISCORD-PROXY}
+	@docker compose build --pull ${DOCKER_HUB_RP-DISCORD-PROXY}
 
 build-rp-discord-proxy-no-cache:
 	# @docker build --tag ${DOCKER_HUB_ORG}/${DOCKER_HUB_RP-DISCORD-PROXY}:${TAG} -f ../rp-discord-proxy/Dockerfile ../rp-discord-proxy
-	@docker-compose build --pull --no-cache ${DOCKER_HUB_RP-DISCORD-PROXY}
+	@docker compose build --pull --no-cache ${DOCKER_HUB_RP-DISCORD-PROXY}
 
 build-rp-indexer:
 	# @docker build --tag ${DOCKER_HUB_ORG}/${DOCKER_HUB_RP-INDEXER}:${TAG} -f ../rp-indexer/Dockerfile ../rp-indexer
-	@docker-compose build --pull ${DOCKER_HUB_RP-INDEXER}
+	@docker compose build --pull ${DOCKER_HUB_RP-INDEXER}
 
 build-rp-indexer-no-cache:
-	@docker-compose build --pull --no-cache ${DOCKER_HUB_RP-INDEXER}
+	@docker compose build --pull --no-cache ${DOCKER_HUB_RP-INDEXER}
 
 push:
 	docker push ${DOCKER_HUB_ORG}/${DOCKER_HUB_PRJ}:${TAG}
@@ -76,33 +76,33 @@ setup-hugepage:
 	@echo never | sudo tee /sys/kernel/mm/transparent_hugepage/enabled
 
 up: network
-	@docker-compose up
-	# @docker-compose up ${DOCKER_HUB_PRJ}
+	@docker compose up
+	# @docker compose up ${DOCKER_HUB_PRJ}
 
 up-d: network
-	@docker-compose up -d
-	# @docker-compose up ${DOCKER_HUB_PRJ}
+	@docker compose up -d
+	# @docker compose up ${DOCKER_HUB_PRJ}
 
 down:
-	@docker-compose down --remove-orphans
+	@docker compose down --remove-orphans
 
 up-prod: network
-	@docker-compose -f ./docker-compose.yml -f ./docker-compose.prod.yml --env-file ./.env up
+	@docker compose -f ./docker-compose.yml -f ./docker-compose.prod.yml --env-file ./.env up
 
 up-prod-d: network
-	@docker-compose -f ./docker-compose.yml -f ./docker-compose.prod.yml --env-file ./.env up -d
+	@docker compose -f ./docker-compose.yml -f ./docker-compose.prod.yml --env-file ./.env up -d
 
 down-prod:
-	@docker-compose -f ./docker-compose.yml -f ./docker-compose.prod.yml down --remove-orphans
+	@docker compose -f ./docker-compose.yml -f ./docker-compose.prod.yml down --remove-orphans
 
 shell:
-	@docker-compose exec ${DOCKER_HUB_PRJ} bash
+	@docker compose exec ${DOCKER_HUB_PRJ} bash
 
 db-migrate:
-	@docker-compose exec ${DOCKER_HUB_PRJ} python manage.py migrate
+	@docker compose exec ${DOCKER_HUB_PRJ} python manage.py migrate
 
 createsuperuser:
-	@docker-compose exec ${DOCKER_HUB_PRJ} python manage.py createsuperuser
+	@docker compose exec ${DOCKER_HUB_PRJ} python manage.py createsuperuser
 
 reset:
 	# @sudo rm -rf ../rapidpro-data/
@@ -131,11 +131,11 @@ reset:
 	@cp ../rp-discord-proxy/config.toml.example ../rapidpro-data/rp-discord-proxy/config.toml
 
 clone:
-	@git clone --branch ${BRANCH} git@github.com:Jozian/courier.git ../courier
-	@git clone --branch ${BRANCH} git@github.com:Jozian/mailroom.git ../mailroom
-	@git clone --branch ${BRANCH} git@github.com:Jozian/rp-archiver.git ../rp-archiver
-	@git clone --branch ${BRANCH} git@github.com:Jozian/rp-indexer.git ../rp-indexer
-	@git clone git@github.com:awensaunders/RapidPro-Discord-Proxy.git ../rp-discord-proxy
+	@git clone --branch ${BRANCH} https://github.com/Jozian/courier.git ../courier
+	@git clone --branch ${BRANCH} https://github.com/Jozian/mailroom.git ../mailroom
+	@git clone --branch ${BRANCH} https://github.com/Jozian/rp-archiver.git ../rp-archiver
+	@git clone --branch ${BRANCH} https://github.com/Jozian/rp-indexer.git ../rp-indexer
+	@git clone https://github.com/awensaunders/RapidPro-Discord-Proxy.git ../rp-discord-proxy
 
 docker-setup:
 	@sudo apt-get install apt-transport-https ca-certificates curl gnupg-agent software-properties-common
@@ -145,5 +145,4 @@ docker-setup:
 	@sudo apt-get install docker-ce docker-ce-cli containerd.io
 	@curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
 	@sudo python ./get-pip.py
-	@sudo pip install docker-compose
 	@sudo adduser ${USER} docker
