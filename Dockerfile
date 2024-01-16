@@ -28,7 +28,6 @@ RUN curl -sL https://deb.nodesource.com/setup_14.x | bash - \
 
 
 FROM base AS pybuilder
-ENV POETRY_VIRTUALENVS_CREATE=false
 
 RUN apt-get -yq update \
         && DEBIAN_FRONTEND=noninteractive apt-get install -y \
@@ -41,16 +40,20 @@ RUN apt-get -yq update \
         && rm -rf /var/lib/apt/lists/* \
         && apt-get clean
 COPY --chown=rapidpro pyproject.toml poetry.lock ./
-USER rapidpro
-RUN pip install --no-cache-dir --user poetry
+ENV POETRY_VIRTUALENVS_CREATE=true
+ENV POETRY_VIRTUALENVS_IN_PROJECT=true
+ENV POETRY_VIRTUALENVS_ALWAYS_COPY=true
+RUN pip install poetry
 RUN poetry install --no-dev
 
 
 
 FROM base AS rapidpro
+ENV POETRY_VIRTUALENVS_IN_PROJECT=true
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1
+ENV PATH="/srv/rapidpro/rapidpro/.venv/bin:${PATH}"
 COPY --chown=rapidpro --from=jsbuilder /srv/rapidpro/node_modules/ ./node_modules/
-COPY --chown=rapidpro --from=pybuilder /srv/rapidpro/.local /srv/rapidpro/.local
+COPY --chown=rapidpro --from=pybuilder /srv/rapidpro/rapidpro/.venv /srv/rapidpro/rapidpro/.venv
 COPY --chown=rapidpro . /srv/rapidpro/rapidpro/
 USER rapidpro
 EXPOSE 8000
