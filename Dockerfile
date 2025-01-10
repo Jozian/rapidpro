@@ -43,7 +43,7 @@ RUN apt-get -yq update \
         && apt-get clean
 COPY --chown=rapidpro pyproject.toml poetry.lock ./
 RUN pip install --no-cache-dir poetry
-RUN poetry install --only main
+RUN poetry install --only main --no-root
 USER rapidpro
 
 
