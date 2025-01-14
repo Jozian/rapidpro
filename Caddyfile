@@ -1,0 +1,19 @@
+{$PUBLIC_HOSTNAME} {
+  log {
+    output stdout
+  }
+  handle /c/* {
+    reverse_proxy courier:8080
+  }
+  handle /mr/* {
+    reverse_proxy mailroom:8090
+  }
+  handle /sitestatic/* {
+    root * /mnt/sitestatic
+    uri strip_prefix /sitestatic
+    file_server
+  }
+  handle {
+    reverse_proxy rapidpro:8000
+  }
+}

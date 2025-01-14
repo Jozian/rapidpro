@@ -14,9 +14,14 @@ services:
       - courier
       - mailroom
     environment:
-      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASS}@postgresql/${DB_NAME}
+      - PUBLIC_HOSTNAME=${HOSTNAME}
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASS}@${DB_HOST}/${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
+      - DB_HOST=${DB_HOST}
+      - DB_NAME=${DB_NAME}
       - REDIS_URL=redis://redis:6379/15
-      - SECRET_KEY=super-secret-key
+      - SECRET_KEY=${SECRET_KEY}
       - MANAGEPY_COLLECTSTATIC=on
       - MANAGEPY_COMPRESS=on
       - MANAGEPY_INIT_DB=on
@@ -32,17 +37,14 @@ services:
       - rapidpro
     volumes:
       - ../rapidpro-data/rapidpro/settings.py.dev.docker:/srv/rapidpro/rapidpro/temba/settings.py
-      - ../rapidpro-data/rapidpro/sitestatic:/srv/rapidpro/rapidpro/static
-      - ../rapidpro-data/rapidpro/sitestatic/CACHE:/srv/rapidpro/rapidpro/sitestatic/CACHE
-      - ../rapidpro-data/rapidpro/templates:/srv/rapidpro/rapidpro/templates
+      - ../rapidpro-data/rapidpro/sitestatic:/srv/rapidpro/rapidpro/sitestatic
 
   postgresql:
+    # TODO: Update this image
     image: postgis/postgis:12-3.0
     environment:
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASS}
-      # - POSTGRES_USER_FILE=/run/secrets/drupal_user
-      # - POSTGRES_PASSWORD_FILE=/run/secrets/drupal_pass
       - POSTGRES_DB=${DB_NAME}
     networks:
       - rapidpro
@@ -55,7 +57,7 @@ services:
       - rapidpro
 
   elasticsearch:
-    image: elasticsearch:7.13.2
+    image: elasticsearch:7.17.26
     environment:
       - discovery.type=single-node
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
@@ -68,7 +70,7 @@ services:
     image: jozian/mailroom:latest
     build:
       context: ../mailroom
-    command: ["-address", "0.0.0.0"]
+    command: ["app", "-address", "0.0.0.0"]
     depends_on:
       - elasticsearch
       - postgresql
@@ -77,10 +79,10 @@ services:
       - MAILROOM_DOMAIN=${HOSTNAME}
       - MAILROOM_ATTACHMENT_DOMAIN=${HOSTNAME}
       - MAILROOM_AUTH_TOKEN=${MAILROOM_AUTH_TOKEN}
-      - MAILROOM_DB=postgres://${DB_USER}:${DB_PASS}@postgresql/${DB_NAME}?sslmode=disable
+      - MAILROOM_DB=postgres://${DB_USER}:${DB_PASS}@${DB_HOST}/${DB_NAME}
       - MAILROOM_REDIS=redis://redis:6379/15
       - MAILROOM_ELASTIC=http://elasticsearch:9200
-      - MAILROOM_LOG_LEVEL=error
+      - MAILROOM_LOG_LEVEL=debug
     networks:
       - rapidpro
 
@@ -94,7 +96,7 @@ services:
     environment:
       - COURIER_DOMAIN=${HOSTNAME}
       - COURIER_SPOOL_DIR=/srv/courier/spool
-      - COURIER_DB=postgres://${DB_USER}:${DB_PASS}@postgresql/${DB_NAME}?sslmode=disable
+      - COURIER_DB=postgres://${DB_USER}:${DB_PASS}@${DB_HOST}/${DB_NAME}
       - COURIER_REDIS=redis://redis:6379/15
     networks:
       - rapidpro
@@ -113,9 +115,13 @@ services:
       - elasticsearch
       - redis
     environment:
-      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASS}@postgresql/${DB_NAME}
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASS}@${DB_HOST}/${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
+      - DB_HOST=${DB_HOST}
+      - DB_NAME=${DB_NAME}
       - REDIS_URL=redis://redis:6379/15
-      - SECRET_KEY=super-secret-key
+      - SECRET_KEY=${SECRET_KEY}
       - MAILROOM_URL=http://mailroom:8090
       - MAILROOM_AUTH_TOKEN=${MAILROOM_AUTH_TOKEN}
       - ELASTICSEARCH_URL=http://elasticsearch:9200
@@ -137,54 +143,28 @@ services:
       - postgresql
       - elasticsearch
     environment:
-      - INDEXER_DB=postgresql://${DB_USER}:${DB_PASS}@postgresql/${DB_NAME}?sslmode=disable
+      - INDEXER_DB=postgres://${DB_USER}:${DB_PASS}@${DB_HOST}/${DB_NAME}
       - INDEXER_ELASTIC_URL=http://elasticsearch:9200
     networks:
       - rapidpro
 
-  rp-archiver:
-    image: jozian/rp-archiver:latest
-    build:
-      context: ../rp-archiver
-    depends_on:
-      - postgresql
-    environment:
-      - ARCHIVER_DB=postgresql://${DB_USER}:${DB_PASS}@postgresql/${DB_NAME}?sslmode=disable
-      - ARCHIVER_TEMP_DIR=/srv/rp-archiver/tmp
-      - ARCHIVER_DELETE=true
-    networks:
-      - rapidpro
-    volumes:
-      - ../rapidpro-data/rp-archiver/tmp:/srv/rp-archiver/tmp
+#  rp-archiver:
+#    image: jozian/rp-archiver:latest
+#    build:
+#      context: ../rp-archiver
+#        #    depends_on:
+#        # - postgresql
+#    environment:
+#      - ARCHIVER_DB=postgres://${DB_USER}:${DB_PASS}@${DB_HOST}/${DB_NAME}?sslmode=require
+#      - ARCHIVER_TEMP_DIR=/srv/rp-archiver/tmp
+#      - ARCHIVER_DELETE=true
+#    networks:
+#      - rapidpro
+#    volumes:
+#      - ../rapidpro-data/rp-archiver/tmp:/srv/rp-archiver/tmp
 
-  rp-discord-proxy:
-    image: jozian/rapidpro-discord-proxy:latest
-    build:
-      context: ../rp-discord-proxy
-    depends_on:
-      - rapidpro
-      - postgresql
-      - courier
-    environment:
-      - RAPIDPRO_DOMAIN=http://courier:8080
-      - DATABASE_URL=postgres://${DB_USER}:${DB_PASS}@postgresql/${DB_NAME}?sslmode=disable
-    networks:
-      - rapidpro
-    volumes:
-      - ../rapidpro-data/rp-discord-proxy/config.toml:/srv/rp-discord-proxy/rp-discord-proxy/config.toml
-
+# TODO: Put back rp-discord-proxy
 
 networks:
   rapidpro:
     external: true
-
-volumes:
-  es_data:
-
-secrets:
-  rapidpro_db_user:
-    # external: true
-    file: ../rapidpro-data/db/rapidpro_db_user.txt
-  rapidpro_db_pass:
-    # external: true
-    file: ../rapidpro-data/db/rapidpro_db_pass.txt

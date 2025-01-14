@@ -20,53 +20,53 @@ network:
 	fi
 
 build:
-	@docker-compose build --pull ${BUILD_ARGS}
+	@docker compose build --pull ${BUILD_ARGS}
 	# @docker build --tag ${DOCKER_HUB_ORG}/${DOCKER_HUB_PRJ}:${TAG} .
 
 build-no-cache:
-	@docker-compose build --pull --no-cache ${BUILD_ARGS}
+	@docker compose build --pull --no-cache ${BUILD_ARGS}
 
 build-courier:
 	# @docker build --tag ${DOCKER_HUB_ORG}/${DOCKER_HUB_COURIER}:${TAG} -f ../courier/Dockerfile ../courier
-	@docker-compose build --pull ${DOCKER_HUB_COURIER}
+	@docker compose build --pull ${DOCKER_HUB_COURIER}
 
 build-courier-no-cache:
-	@docker-compose build --pull --no-cache ${DOCKER_HUB_COURIER}
+	@docker compose build --pull --no-cache ${DOCKER_HUB_COURIER}
 
 build-mailroom:
 	# @docker build --tag ${DOCKER_HUB_ORG}/${DOCKER_HUB_MAILROOM}:${TAG} -f ../mailroom/Dockerfile ../mailroom
-	@docker-compose build --pull ${DOCKER_HUB_MAILROOM}
+	@docker compose build --pull ${DOCKER_HUB_MAILROOM}
 
 build-mailroom-no-cache:
-	@docker-compose build --pull --no-cache ${DOCKER_HUB_MAILROOM}
+	@docker compose build --pull --no-cache ${DOCKER_HUB_MAILROOM}
 
 build-rp-archiver:
 	# @docker build --tag ${DOCKER_HUB_ORG}/${DOCKER_HUB_RP-ARCHIVER}:${TAG} -f ../rp-archiver/Dockerfile ../rp-archiver
-	@docker-compose build --pull ${DOCKER_HUB_RP-ARCHIVER}
+	@docker compose build --pull ${DOCKER_HUB_RP-ARCHIVER}
 
 build-rp-archiver-no-cache:
-	@docker-compose build --pull --no-cache ${DOCKER_HUB_RP-ARCHIVER}
+	@docker compose build --pull --no-cache ${DOCKER_HUB_RP-ARCHIVER}
 
 build-rp-celery:
-	@docker-compose build --pull ${DOCKER_HUB_RP-CELERY}
+	@docker compose build --pull ${DOCKER_HUB_RP-CELERY}
 
 build-rp-celery-no-cache:
-	@docker-compose build --pull --no-cache ${DOCKER_HUB_RP-CELERY}
+	@docker compose build --pull --no-cache ${DOCKER_HUB_RP-CELERY}
 
 build-rp-discord-proxy:
 	# @docker build --tag ${DOCKER_HUB_ORG}/${DOCKER_HUB_RP-DISCORD-PROXY}:${TAG} -f ../rp-discord-proxy/Dockerfile ../rp-discord-proxy
-	@docker-compose build --pull ${DOCKER_HUB_RP-DISCORD-PROXY}
+	@docker compose build --pull ${DOCKER_HUB_RP-DISCORD-PROXY}
 
 build-rp-discord-proxy-no-cache:
 	# @docker build --tag ${DOCKER_HUB_ORG}/${DOCKER_HUB_RP-DISCORD-PROXY}:${TAG} -f ../rp-discord-proxy/Dockerfile ../rp-discord-proxy
-	@docker-compose build --pull --no-cache ${DOCKER_HUB_RP-DISCORD-PROXY}
+	@docker compose build --pull --no-cache ${DOCKER_HUB_RP-DISCORD-PROXY}
 
 build-rp-indexer:
 	# @docker build --tag ${DOCKER_HUB_ORG}/${DOCKER_HUB_RP-INDEXER}:${TAG} -f ../rp-indexer/Dockerfile ../rp-indexer
-	@docker-compose build --pull ${DOCKER_HUB_RP-INDEXER}
+	@docker compose build --pull ${DOCKER_HUB_RP-INDEXER}
 
 build-rp-indexer-no-cache:
-	@docker-compose build --pull --no-cache ${DOCKER_HUB_RP-INDEXER}
+	@docker compose build --pull --no-cache ${DOCKER_HUB_RP-INDEXER}
 
 push:
 	docker push ${DOCKER_HUB_ORG}/${DOCKER_HUB_PRJ}:${TAG}
@@ -76,44 +76,41 @@ setup-hugepage:
 	@echo never | sudo tee /sys/kernel/mm/transparent_hugepage/enabled
 
 up: network
-	@docker-compose up
-	# @docker-compose up ${DOCKER_HUB_PRJ}
+	@docker compose up
+	# @docker compose up ${DOCKER_HUB_PRJ}
 
 up-d: network
-	@docker-compose up -d
-	# @docker-compose up ${DOCKER_HUB_PRJ}
+	@docker compose up -d
+	# @docker compose up ${DOCKER_HUB_PRJ}
 
 down:
-	@docker-compose down --remove-orphans
+	@docker compose down --remove-orphans
 
 up-prod: network
-	@docker-compose -f ./docker-compose.yml -f ./docker-compose.prod.yml --env-file ./.env up
+	@docker compose -f ./docker-compose.yml -f ./docker-compose.prod.yml --env-file ./.env up
 
 up-prod-d: network
-	@docker-compose -f ./docker-compose.yml -f ./docker-compose.prod.yml --env-file ./.env up -d
+	@docker compose -f ./docker-compose.yml -f ./docker-compose.prod.yml --env-file ./.env up -d
 
 down-prod:
-	@docker-compose -f ./docker-compose.yml -f ./docker-compose.prod.yml down --remove-orphans
+	@docker compose -f ./docker-compose.yml -f ./docker-compose.prod.yml down --remove-orphans
 
 shell:
-	@docker-compose exec ${DOCKER_HUB_PRJ} bash
+	@docker compose exec ${DOCKER_HUB_PRJ} bash
 
 db-migrate:
-	@docker-compose exec ${DOCKER_HUB_PRJ} python manage.py migrate
+	@docker compose exec ${DOCKER_HUB_PRJ} python manage.py migrate
 
 createsuperuser:
-	@docker-compose exec ${DOCKER_HUB_PRJ} python manage.py createsuperuser
+	@docker compose exec ${DOCKER_HUB_PRJ} python manage.py createsuperuser
+
+collectstatic:
+	@docker compose exec ${DOCKER_HUB_PRJ} python manage.py collectstatic
 
 reset:
-	# @sudo rm -rf ../rapidpro-data/
-
 	@mkdir ../rapidpro-data/
 	@mkdir -p ../rapidpro-data/rapidpro/sitestatic/
 	@cp temba/settings.py.dev.docker ../rapidpro-data/rapidpro/
-	@cp -a static/* ../rapidpro-data/rapidpro/sitestatic/
-	@mkdir -p ../rapidpro-data/rapidpro/sitestatic/CACHE
-
-	@cp -a templates/ ../rapidpro-data/rapidpro/
 
 	@mkdir -p ../rapidpro-data/db/data/
 
@@ -126,6 +123,9 @@ reset:
 	@mkdir -p ../rapidpro-data/courier/spool
 
 	@mkdir -p ../rapidpro-data/rp-archiver/tmp
+
+	@mkdir -p ../rapidpro-data/caddy
+	@cp ./Caddyfile ../rapidpro-data/caddy 
 
 	@mkdir -p ../rapidpro-data/rp-discord-proxy
 	@cp ../rp-discord-proxy/config.toml.example ../rapidpro-data/rp-discord-proxy/config.toml

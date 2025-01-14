@@ -8,6 +8,7 @@
 .direnv
 .commit
 .ruff_cache
+.env
 
 rp-indexer
 
